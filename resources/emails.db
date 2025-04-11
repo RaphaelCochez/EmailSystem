@@ -1,0 +1,10 @@
+{
+  "id": "1",
+  "to": "alice@example.com",
+  "from": "bob@example.com",
+  "subject": "Meeting",
+  "body": "Let’s meet at 5pm.",
+  "timestamp": "2025-04-10T18:00:00Z",
+  "visible": true,
+  "edited": false
+}

@@ -1,0 +1,17 @@
+# Java
+*.class
+*.jar
+*.log
+*.iml
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# VS Code
+.vscode/
+
+# OS stuff
+.DS_Store
+Thumbs.db

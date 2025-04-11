@@ -1,0 +1,9 @@
+client\ServerListener.class
+client\CommandFormatter.class
+main\java\server\service\SessionManager.class
+main\java\server\EmailServer.class
+main\java\server\ClientHandler.class
+main\java\server\data\FileDatabase.class
+main\java\server\service\EmailService.class
+client\EmailClientCLI.class
+main\java\server\service\AuthService.class
