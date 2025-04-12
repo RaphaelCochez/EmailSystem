@@ -15,3 +15,6 @@ build/
 # OS stuff
 .DS_Store
 Thumbs.db
+
+# Personal developer guides
+how-to-commit.md
