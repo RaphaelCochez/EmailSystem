@@ -4,9 +4,9 @@
 /EmailSystem
 ├── /src
 │   ├── /client
-│   │   ├── EmailClientCLI.java          ← Your CLI client main logic (handles UI, threads)
+│   │   ├── EmailClientCLI.java          ← CLI client main logic (handles UI, threads)
 │   │   ├── ServerListener.java          ← Listens for server messages
-│   │   └── CommandHandler.java          ← Optional: handles user command formatting
+│   │   └── CommandHandler.java          ← handles user command formatting
 │   │
 │   ├── /server
 │   │   ├── EmailServer.java             ← Main server class (entry point)
