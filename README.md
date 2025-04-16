@@ -121,6 +121,67 @@ Each handler builds a JSON payload, formats it with the correct command, and sen
 
 ---
 
+
+
+
+
+
+
+# Constants.java Overview
+
+The `Constants.java` file defines all global constants used across the email system. It centralizes key configuration values for security, file paths, protocol commands, CLI formatting, and environment settings. This helps ensure consistency and maintainability across the project.
+
+### Security and Hashing
+
+- `HASH_ALGORITHM`: "SHA-256" – Used for secure password hashing.
+- `SALT_DELIMITER`: "::" – Delimiter between hashed password and salt.
+- `SALT_LENGTH`: 16 – The number of characters in a generated salt.
+
+### Server Configuration
+
+- `SERVER_PORT`: 8080 – Default TCP port for the server.
+- `MAX_CLIENTS`: 50 – Maximum number of concurrent client connections.
+
+### File Paths
+
+- `USERS_DB_PATH`: Path to the flat-file database storing user credentials.
+- `EMAILS_DB_PATH`: Path to the flat-file database storing emails.
+- `SERVER_LOG_PATH`: Log output file for server activity and errors.
+
+### Environment Flags
+
+- `DEBUG_MODE`: Enables verbose logging and internal state outputs when set to `true`.
+- `IS_TEST_ENV`: Activates testing-safe configurations and isolated file paths.
+- `USE_TLS`: Placeholder flag for future implementation of TLS/SSL encryption.
+
+### Protocol Commands
+
+The following string constants represent valid commands used in client-server communication:
+
+- `REGISTER`
+- `LOGIN`
+- `LOGOUT`
+- `SEND`
+- `LIST`
+- `READ`
+- `DELETE`
+- `SEARCH`
+- `EXIT`
+
+### CLI Syntax Templates
+
+Each command may be associated with a syntax template used to validate and format command-line input. These templates help parse user input into valid protocol messages that conform to the system's expectations.
+
+Examples:
+
+- `REGISTER <email> <password>`
+- `LOGIN <email> <password>`
+- `SEND <to> <subject> <body>`
+- `SEARCH <keyword>`
+
+
+
+
 ##  Next Steps
 - [ ] Implement `CommandFormatter.java` to reduce duplication in request building.
 - [ ] Build each CLI handler method.
