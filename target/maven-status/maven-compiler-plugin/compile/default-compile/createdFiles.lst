@@ -1,11 +1,7 @@
-utils\Constants.class
 server\EmailServer.class
-server\ClientHandler.class
-server\data\FileDatabase.class
-utils\JsonUtils.class
 server\service\AuthService.class
 server\service\SessionManager.class
 model\Email.class
-utils\SecurityUtils.class
+server\data\FileDatabase.class
 server\service\EmailService.class
 model\User.class
