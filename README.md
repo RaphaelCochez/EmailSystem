@@ -1,4 +1,11 @@
+# ReadMe.md
+
+## Docs formatter tool
+https://www.rich-text-to-markdown.com/
+
 ## Project Structure
+
+
 
 ```pgsql
 /EmailSystem
@@ -6,31 +13,47 @@
 │   ├── /client
 │   │   ├── EmailClientCLI.java          ← CLI client main logic (handles UI, threads)
 │   │   ├── ServerListener.java          ← Listens for server messages
-│   │   └── CommandHandler.java          ← handles user command formatting
+│   │   └── CommandFormatter.java        ← Handles user command formatting
 │   │
 │   ├── /server
 │   │   ├── EmailServer.java             ← Main server class (entry point)
-│   │   ├── ClientHandler.java           ← Thread-per-client logic
-│   │   ├── AuthService.java             ← Handles login, register
-│   │   ├── EmailService.java            ← Handles send, retrieve, search
-│   │   ├── FileDatabase.java            ← Reads/writes users.db and emails.db
-│   │   └── SessionManager.java          ← Tracks who is logged in
-│   │
+│   │   ├── /handler
+│   │   │   ├── ClientHandler.java       ← Thread-per-client handler
+│   │   │   └── CommandHandler.java      ← Handles incoming commands from client
+│   │   ├── /protocol
+│   │   │   └── ProtocolConstants.java   ← Command keywords and parsing logic
+│   │   ├── /service
+│   │   │   ├── AuthService.java         ← Handles login, registration, logout
+│   │   │   ├── EmailService.java        ← Send, read, inbox/sent logic
+│   │   │   └── SessionManager.java      ← Tracks active user sessions
+│   │   ├── /data
+│   │   │   └── FileDatabase.java        ← Read/write operations for users/emails
+│
 │   ├── /model
 │   │   ├── User.java                    ← Represents a user object
 │   │   └── Email.java                   ← Represents an email object
-│   │
+│
 │   ├── /utils
-│   │   ├── JsonUtils.java               ← Helper for JSON parsing/formatting
-│   │   ├── SecurityUtils.java           ← SHA-256 password hashing
-│   │   └── Constants.java               ← Any shared strings or config
+│   │   ├── Constants.java               ← App-wide flags and config values
+│   │   ├── JsonUtils.java               ← JSON serialization/deserialization
+│   │   └── SecurityUtils.java           ← Password hashing (SHA-256)
 │
 ├── /resources
 │   ├── users.db                         ← Flat file storing user credentials
-│   └── emails.db                        ← Flat file storing all email records
+│   └── emails.db                        ← Flat file storing email records
 │
-├── /logs                                ← (optional) for debugging
-│   └── server.log
+├── /test
+│   ├── /java
+│   │   ├── /server/data
+│   │   │   ├── FileDatabaseEmailTest.java ← Unit test for saving/loading emails
+│   │   │   └── FileDatabaseUserTest.java  ← Unit test for user persistence logic
+│   │   └── /...                         ← Additional tests go here
+│   └── /resources
+│       ├── test_users.db               ← Temp user DB for tests
+│       └── test_emails.db              ← Temp email DB for tests
+│
+├── /logs
+│   └── server.log                       ← Server log output (if enabled)
 │
 └── README.md
 
@@ -133,53 +156,69 @@ The `Constants.java` file defines all global constants used across the email sys
 
 ### Security and Hashing
 
-- `HASH_ALGORITHM`: "SHA-256" – Used for secure password hashing.
-- `SALT_DELIMITER`: "::" – Delimiter between hashed password and salt.
-- `SALT_LENGTH`: 16 – The number of characters in a generated salt.
+| Constant        | Value      | Description                          |
+|-----------------|------------|--------------------------------------|
+| `HASH_ALGORITHM` | `"SHA-256"` | Algorithm used for password hashing. |
+| `SALT_DELIMITER` | `"::"`     | Delimiter between hash and salt.     |
+| `SALT_LENGTH`    | `16`        | Number of characters in salt.        |
+
+---
 
 ### Server Configuration
 
-- `SERVER_PORT`: 8080 – Default TCP port for the server.
-- `MAX_CLIENTS`: 50 – Maximum number of concurrent client connections.
+| Constant        | Value | Description                                  |
+|-----------------|-------|----------------------------------------------|
+| `SERVER_PORT`   | `5050` | TCP port on which the server listens.        |
+| `MAX_CLIENTS`   | `50`   | Max number of concurrent client connections. |
+
+---
 
 ### File Paths
 
-- `USERS_DB_PATH`: Path to the flat-file database storing user credentials.
-- `EMAILS_DB_PATH`: Path to the flat-file database storing emails.
-- `SERVER_LOG_PATH`: Log output file for server activity and errors.
+| Constant         | Path                                   | Description                            |
+|------------------|----------------------------------------|----------------------------------------|
+| `USERS_DB_PATH`  | `"src/main/resources/users.db"`        | File storing user credentials.         |
+| `EMAILS_DB_PATH` | `"src/main/resources/emails.db"`       | File storing emails.                   |
+| `SERVER_LOG_PATH`| `"src/logs/server.log"`                | Server log file path.                  |
+
+---
 
 ### Environment Flags
 
-- `DEBUG_MODE`: Enables verbose logging and internal state outputs when set to `true`.
-- `IS_TEST_ENV`: Activates testing-safe configurations and isolated file paths.
-- `USE_TLS`: Placeholder flag for future implementation of TLS/SSL encryption.
+| Constant       | Default | Description                                               |
+|----------------|---------|-----------------------------------------------------------|
+| `DEBUG_MODE`   | `true`  | Enables detailed logging output.                          |
+| `IS_TEST_ENV`  | `true`  | Enables test-safe configurations and paths.               |
+| `USE_TLS`      | `false` | Placeholder flag for future TLS/SSL support.              |
+
+---
 
 ### Protocol Commands
 
-The following string constants represent valid commands used in client-server communication:
+| Command Constant | Description                          |
+|------------------|--------------------------------------|
+| `REGISTER`       | Register a new user.                 |
+| `LOGIN`          | Log in an existing user.             |
+| `LOGOUT`         | Log out from current session.        |
+| `SEND`           | Send an email.                       |
+| `LIST`           | List inbox or sent emails.           |
+| `READ`           | Read a specific email.               |
+| `DELETE`         | Delete an email.                     |
+| `SEARCH`         | Search emails by keyword.            |
+| `EXIT`           | Terminate the client session.        |
 
-- `REGISTER`
-- `LOGIN`
-- `LOGOUT`
-- `SEND`
-- `LIST`
-- `READ`
-- `DELETE`
-- `SEARCH`
-- `EXIT`
+---
 
 ### CLI Syntax Templates
 
-Each command may be associated with a syntax template used to validate and format command-line input. These templates help parse user input into valid protocol messages that conform to the system's expectations.
-
-Examples:
-
-- `REGISTER <email> <password>`
-- `LOGIN <email> <password>`
-- `SEND <to> <subject> <body>`
-- `SEARCH <keyword>`
-
-
+| Template                     | Description                           |
+|------------------------------|---------------------------------------|
+| `REGISTER <email> <pass>`    | Registers a new user.                 |
+| `LOGIN <email> <pass>`       | Logs in with credentials.             |
+| `SEND <to> <subject> <body>` | Sends a new email.                    |
+| `SEARCH <keyword>`           | Searches for emails matching keyword. |
+| `LOGOUT`                     | Logs out the current user.            |
+| `EXIT`                       | Disconnects the client from server.   |
 
 
 ##  Next Steps

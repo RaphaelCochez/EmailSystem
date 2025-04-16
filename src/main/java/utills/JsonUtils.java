@@ -1,4 +1,4 @@
-package utils;
+package utills;
 
 public class JsonUtils {
 
