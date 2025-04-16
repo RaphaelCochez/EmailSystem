@@ -11,34 +11,51 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * FileDatabase provides thread-safe file-based persistence for user and email
- * data.
- * Data is stored in JSON-line format in flat files under /resources.
+ * FileDatabase provides thread-safe persistence for users and emails.
  */
 public class FileDatabase {
 
-    private static final String USERS_PATH = "src/main/resources/users.db";
-    private static final String EMAILS_PATH = "src/main/resources/emails.db";
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
+    private final String usersPath;
+    private final String emailsPath;
     private final Object userLock = new Object();
     private final Object emailLock = new Object();
-
-    // ------------------------- USER METHODS -------------------------
+    private final Gson gson = new GsonBuilder().create();
 
     /**
-     * Saves a new user to users.db if the email is not already taken.
+     * Constructor for FileDatabase.
      *
-     * @param user the user to save
-     * @return true if saved successfully; false if user already exists or I/O error
-     *         occurs
+     * @param usersPath  path to users.db file
+     * @param emailsPath path to emails.db file
      */
-    public boolean saveUser(final User user) {
-        synchronized (userLock) {
-            if (getUser(user.getEmail()) != null)
-                return false;
+    public FileDatabase(String usersPath, String emailsPath) {
+        this.usersPath = usersPath;
+        this.emailsPath = emailsPath;
+        ensureFileExists(usersPath);
+        ensureFileExists(emailsPath);
+    }
 
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_PATH, true))) {
+    private void ensureFileExists(String path) {
+        try {
+            File file = new File(path);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean saveUser(User user) {
+        synchronized (userLock) {
+            if (getUser(user.getEmail()) != null) {
+                return false;
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(usersPath, true))) {
                 writer.write(gson.toJson(user));
                 writer.newLine();
                 return true;
@@ -49,42 +66,36 @@ public class FileDatabase {
         }
     }
 
-    /**
-     * Retrieves a user from users.db by email.
-     *
-     * @param email the email to search for
-     * @return the User if found; null otherwise
-     */
-    public User getUser(final String email) {
+    public User getUser(String email) {
         synchronized (userLock) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(USERS_PATH))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(usersPath))) {
                 return reader.lines()
-                        .map(line -> gson.fromJson(line, User.class))
+                        .filter(line -> !line.trim().isEmpty()) // Skip empty lines
+                        .map(line -> {
+                            try {
+                                return gson.fromJson(line, User.class);
+                            } catch (JsonSyntaxException e) {
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
                         .filter(user -> user.getEmail().equalsIgnoreCase(email))
                         .findFirst()
                         .orElse(null);
-            } catch (IOException | JsonSyntaxException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
                 return null;
             }
         }
     }
 
-    // ------------------------ EMAIL METHODS -------------------------
-
-    /**
-     * Saves an email to emails.db. Generates a unique ID if missing.
-     *
-     * @param email the email to save
-     * @return true if written successfully; false on error
-     */
-    public boolean saveEmail(final Email email) {
+    public boolean saveEmail(Email email) {
         synchronized (emailLock) {
             if (email.getId() == null || email.getId().isEmpty()) {
                 email.setId(UUID.randomUUID().toString());
             }
 
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(EMAILS_PATH, true))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(emailsPath, true))) {
                 writer.write(gson.toJson(email));
                 writer.newLine();
                 return true;
@@ -95,51 +106,39 @@ public class FileDatabase {
         }
     }
 
-    /**
-     * Loads all emails from emails.db into memory.
-     *
-     * @return a List of Email objects
-     */
     public List<Email> loadAllEmails() {
         synchronized (emailLock) {
             List<Email> emails = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new FileReader(EMAILS_PATH))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(emailsPath))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    emails.add(gson.fromJson(line, Email.class));
+                    if (line.trim().isEmpty())
+                        continue;
+                    try {
+                        emails.add(gson.fromJson(line, Email.class));
+                    } catch (JsonSyntaxException ignored) {
+                        // Skip invalid lines
+                    }
                 }
-            } catch (IOException | JsonSyntaxException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
             return emails;
         }
     }
 
-    /**
-     * Returns emails for a specific user by type (sent or received).
-     *
-     * @param email the user’s email address
-     * @param type  "sent" or "received"
-     * @return a list of matching Email objects
-     */
-    public List<Email> getEmailsForUser(final String email, final String type) {
-        return loadAllEmails().stream()
-                .filter(e -> "sent".equalsIgnoreCase(type)
-                        ? e.getFrom().equalsIgnoreCase(email)
-                        : e.getTo().equalsIgnoreCase(email))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Retrieves a specific email by its ID.
-     *
-     * @param id the unique ID of the email
-     * @return the Email object if found; null otherwise
-     */
-    public Email getEmailById(final String id) {
+    public Email getEmailById(String id) {
         return loadAllEmails().stream()
                 .filter(email -> email.getId().equals(id))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public List<Email> getEmailsForUser(String email, String type) {
+        return loadAllEmails().stream()
+                .filter(e -> type.equalsIgnoreCase("sent")
+                        ? e.getFrom().equalsIgnoreCase(email)
+                        : e.getTo().equalsIgnoreCase(email))
+                .collect(Collectors.toList());
     }
 }

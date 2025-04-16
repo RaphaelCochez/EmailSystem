@@ -1,4 +1,4 @@
-package main.java.server.service;
+package server.service;
 
 public class AuthService {
 

@@ -1,9 +1,14 @@
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\client\CommandFormatter.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\client\EmailClientCLI.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\client\ServerListener.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\model\Email.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\model\User.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\ClientHandler.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\data\FileDatabase.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\EmailServer.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\AuthService.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\EmailService.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\SessionManager.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utils\Constants.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utils\JsonUtils.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utils\SecurityUtils.java
