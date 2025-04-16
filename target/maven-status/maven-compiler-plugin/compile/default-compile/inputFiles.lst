@@ -8,9 +8,8 @@ C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\EmailServer.jav
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\handler\ClientHandler.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\handler\CommandHandler.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\protocol\ProtocolConstants.java
-C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\AuthService.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\EmailService.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\server\service\SessionManager.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utills\Constants.java
-C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utills\JsonUtils.java
-C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utills\SecurityUtils.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utills\JsonUtills.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\main\java\utills\SecurityUtills.java

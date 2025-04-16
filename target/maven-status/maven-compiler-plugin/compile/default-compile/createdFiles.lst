@@ -1,7 +1,6 @@
 server\EmailServer.class
-server\service\AuthService.class
+server\data\FileDatabase.class
 server\service\SessionManager.class
 model\Email.class
-server\data\FileDatabase.class
 server\service\EmailService.class
 model\User.class
