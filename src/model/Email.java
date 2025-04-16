@@ -13,7 +13,7 @@ public class Email {
     public Email() {
     } // Default constructor required for Gson
 
-    // Optionally add constructor, getters, setters
+    // Optionally add constructor, getters, setters, not needed for now
 
     public String getId() {
         return id;
@@ -60,7 +60,7 @@ public class Email {
     }
 
     public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp = timestamp; // check in CA
     }
 
     public boolean isVisible() {
