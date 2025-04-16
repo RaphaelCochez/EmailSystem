@@ -32,7 +32,7 @@ class FileDatabaseEmailTest {
             Files.createFile(TEMP_EMAILS_DB);
             Files.createFile(TEMP_USERS_DB);
 
-            System.out.println("✅ Test DBs prepared:");
+            System.out.println("Test DBs prepared:");
             System.out.println("- " + TEMP_EMAILS_DB.toAbsolutePath());
             System.out.println("- " + TEMP_USERS_DB.toAbsolutePath());
 
@@ -63,7 +63,7 @@ class FileDatabaseEmailTest {
 
         // Debug: print file content
         try {
-            System.out.println("📦 Email DB content after save:");
+            System.out.println("Email DB content after save:");
             Files.lines(TEMP_EMAILS_DB).forEach(System.out::println);
         } catch (IOException e) {
             e.printStackTrace();
@@ -89,7 +89,7 @@ class FileDatabaseEmailTest {
         try {
             Files.deleteIfExists(TEMP_EMAILS_DB);
             Files.deleteIfExists(TEMP_USERS_DB);
-            System.out.println("🧹 Cleaned up test DB files.");
+            System.out.println("Cleaned up test DB files.");
         } catch (IOException e) {
             e.printStackTrace();
         }
