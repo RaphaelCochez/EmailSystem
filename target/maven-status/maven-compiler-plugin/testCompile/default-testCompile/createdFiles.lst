@@ -1,2 +1,7 @@
+utills\SecurityUtillsTest.class
 server\data\FileDatabaseEmailTest.class
 server\data\FileDatabaseUserTest.class
+server\service\AuthServiceTest$FakeDatabase.class
+server\service\AuthServiceTest.class
+server\service\SessionManagerTest.class
+server\service\AuthServiceTest$FakeSessionManager.class

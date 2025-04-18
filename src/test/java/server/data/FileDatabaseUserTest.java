@@ -41,7 +41,7 @@ class FileDatabaseUserTest {
         User loaded = fileDatabase.getUser("test@example.com");
         assertNotNull(loaded, "User should be found");
         assertEquals("test@example.com", loaded.getEmail());
-        assertEquals("hashedpassword123", loaded.getHashedPassword());
+        assertEquals("hashedpassword123", loaded.getPassword());
     }
 
     @Test

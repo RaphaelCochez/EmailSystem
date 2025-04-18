@@ -1,6 +1,13 @@
 server\EmailServer.class
-server\data\FileDatabase.class
+server\handler\ClientHandler.class
+server\service\AuthService.class
 server\service\SessionManager.class
 model\Email.class
+server\data\FileDatabase.class
+server\handler\CommandHandler.class
+utills\JsonUtills.class
+utills\SecurityUtills.class
+server\protocol\ProtocolConstants.class
+utills\Constants.class
 server\service\EmailService.class
 model\User.class

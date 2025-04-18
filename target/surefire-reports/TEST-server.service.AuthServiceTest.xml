@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="server.data.FileDatabaseEmailTest" time="0.152" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="server.service.AuthServiceTest" time="0.04" tests="9" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="24"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -59,13 +59,13 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="68.0"/>
   </properties>
-  <testcase name="testSaveAndLoadEmail" classname="server.data.FileDatabaseEmailTest" time="0.13">
-    <system-out><![CDATA[Test DBs prepared:
-- C:\Users\Raphael\Documents\Java\EmailSystem\src\test\resources\test_emails.db
-- C:\Users\Raphael\Documents\Java\EmailSystem\src\test\resources\test_users.db
-Email DB content after save:
-{"id":"1f2bcce8-1e87-4fc2-8993-8a5323e79cff","to":"recipient@example.com","from":"sender@example.com","subject":"Hello","body":"Message content here","timestamp":"2025-04-10T14:00:00Z","visible":true,"edited":false}
-Cleaned up test DB files.
-]]></system-out>
-  </testcase>
+  <testcase name="testHandleLoginNonexistentUser" classname="server.service.AuthServiceTest" time="0.006"/>
+  <testcase name="testHandleLogoutNotLoggedIn" classname="server.service.AuthServiceTest" time="0.006"/>
+  <testcase name="testHandleRegisterMissingFields" classname="server.service.AuthServiceTest" time="0.006"/>
+  <testcase name="testHandleRegisterInvalidJson" classname="server.service.AuthServiceTest" time="0.002"/>
+  <testcase name="testHandleLoginSuccess" classname="server.service.AuthServiceTest" time="0.006"/>
+  <testcase name="testHandleRegisterDuplicateUser" classname="server.service.AuthServiceTest" time="0.003"/>
+  <testcase name="testHandleLoginInvalidPassword" classname="server.service.AuthServiceTest" time="0.002"/>
+  <testcase name="testHandleLogoutSuccess" classname="server.service.AuthServiceTest" time="0.002"/>
+  <testcase name="testHandleRegisterSuccess" classname="server.service.AuthServiceTest" time="0.002"/>
 </testsuite>

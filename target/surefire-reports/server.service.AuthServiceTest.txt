@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: utills.SecurityUtillsTest
+Test set: server.service.AuthServiceTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s - in utills.SecurityUtillsTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.04 s - in server.service.AuthServiceTest
