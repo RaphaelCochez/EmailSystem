@@ -1,20 +1,57 @@
-# Java
+# === Java ===
 *.class
 *.jar
+*.war
+*.ear
 *.log
 *.iml
+*.hprof
+*.swp
 
-# Gradle
+# === Maven ===
+target/
+dependency-reduced-pom.xml
+release.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+*.mvn/timing.properties
+
+# === IntelliJ IDEA ===
+.idea/
+*.iws
+*.ipr
+*.iml
+out/
+
+# === Gradle (if present) ===
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
-# VS Code
+# === VS Code ===
 .vscode/
+*.code-workspace
 
-# OS stuff
+# === OS-specific ===
 .DS_Store
 Thumbs.db
 
-# Personal developer guides
+# === Logs & Reports ===
+logs/
+*.log
+*.dump
+*.dumpstream
+*.hprof
+*.out
+
+# === Test reports ===
+surefire-reports/
+jacoco.exec
+
+# === Generated docs or exports ===
+/doc/output/
+/export/
+
+# === Personal Developer Files ===
 how-to-commit.md
