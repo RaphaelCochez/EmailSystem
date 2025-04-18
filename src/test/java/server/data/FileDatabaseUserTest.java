@@ -29,6 +29,7 @@ class FileDatabaseUserTest {
         }
 
         fileDatabase = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
+        fileDatabase.loadAll(); // Load initial state (if any)
     }
 
     @Test

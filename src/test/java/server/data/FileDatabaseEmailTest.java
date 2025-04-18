@@ -21,14 +21,9 @@ class FileDatabaseEmailTest {
     @BeforeEach
     void setUp() {
         try {
-            // Ensure parent directory exists
             Files.createDirectories(TEMP_EMAILS_DB.getParent());
-
-            // Delete old files if present
             Files.deleteIfExists(TEMP_EMAILS_DB);
             Files.deleteIfExists(TEMP_USERS_DB);
-
-            // Create fresh empty test files
             Files.createFile(TEMP_EMAILS_DB);
             Files.createFile(TEMP_USERS_DB);
 
@@ -42,11 +37,11 @@ class FileDatabaseEmailTest {
         }
 
         fileDatabase = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
+        fileDatabase.loadAll(); // Load any initial state (empty for this test)
     }
 
     @Test
-    void testSaveAndLoadEmail() {
-        // Create a sample email
+    void testSaveAndRetrieveEmailFromMemory() {
         Email email = new Email();
         email.setId(UUID.randomUUID().toString());
         email.setTo("recipient@example.com");
@@ -57,21 +52,11 @@ class FileDatabaseEmailTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        // Save the email
         boolean saved = fileDatabase.saveEmail(email);
         assertTrue(saved, "Email should be saved successfully");
 
-        // Debug: print file content
-        try {
-            System.out.println("Email DB content after save:");
-            Files.lines(TEMP_EMAILS_DB).forEach(System.out::println);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Load all emails and verify contents
-        List<Email> loaded = fileDatabase.loadAllEmails();
-        assertEquals(1, loaded.size(), "One email should be loaded");
+        List<Email> loaded = fileDatabase.getEmailsForUser("recipient@example.com", "received");
+        assertEquals(1, loaded.size(), "One email should be retrieved for recipient");
 
         Email loadedEmail = loaded.get(0);
         assertEquals(email.getId(), loadedEmail.getId());

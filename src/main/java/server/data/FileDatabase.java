@@ -2,7 +2,6 @@ package server.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import model.Email;
 import model.User;
 
@@ -11,7 +10,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * FileDatabase provides thread-safe persistence for users and emails.
+ * FileDatabase manages loading and saving of user/email data at
+ * startup/shutdown only.
+ * During runtime, all state is stored and manipulated in memory.
  */
 public class FileDatabase {
 
@@ -21,12 +22,9 @@ public class FileDatabase {
     private final Object emailLock = new Object();
     private final Gson gson = new GsonBuilder().create();
 
-    /**
-     * Constructor for FileDatabase.
-     *
-     * @param usersPath  path to users.db file
-     * @param emailsPath path to emails.db file
-     */
+    private final Map<String, User> userMap = new HashMap<>();
+    private final List<Email> emailList = new ArrayList<>();
+
     public FileDatabase(String usersPath, String emailsPath) {
         this.usersPath = usersPath;
         this.emailsPath = emailsPath;
@@ -49,43 +47,72 @@ public class FileDatabase {
         }
     }
 
-    public boolean saveUser(User user) {
+    /** Load all user and email data into memory (startup only). */
+    public void loadAll() {
         synchronized (userLock) {
-            if (getUser(user.getEmail()) != null) {
-                return false;
-            }
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(usersPath, true))) {
-                writer.write(gson.toJson(user));
-                writer.newLine();
-                return true;
+            try (BufferedReader reader = new BufferedReader(new FileReader(usersPath))) {
+                reader.lines()
+                        .filter(line -> !line.trim().isEmpty())
+                        .map(line -> gson.fromJson(line, User.class))
+                        .filter(Objects::nonNull)
+                        .forEach(user -> userMap.put(user.getEmail().toLowerCase(), user));
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        synchronized (emailLock) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(emailsPath))) {
+                reader.lines()
+                        .filter(line -> !line.trim().isEmpty())
+                        .map(line -> gson.fromJson(line, Email.class))
+                        .filter(Objects::nonNull)
+                        .forEach(emailList::add);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /** Persist all user and email data to disk (shutdown only). */
+    public void saveAll() {
+        synchronized (userLock) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(usersPath, false))) {
+                for (User user : userMap.values()) {
+                    writer.write(gson.toJson(user));
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        synchronized (emailLock) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(emailsPath, false))) {
+                for (Email email : emailList) {
+                    writer.write(gson.toJson(email));
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean saveUser(User user) {
+        synchronized (userLock) {
+            String key = user.getEmail().toLowerCase();
+            if (userMap.containsKey(key)) {
                 return false;
             }
+            userMap.put(key, user);
+            return true;
         }
     }
 
     public User getUser(String email) {
         synchronized (userLock) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(usersPath))) {
-                return reader.lines()
-                        .filter(line -> !line.trim().isEmpty()) // Skip empty lines
-                        .map(line -> {
-                            try {
-                                return gson.fromJson(line, User.class);
-                            } catch (JsonSyntaxException e) {
-                                return null;
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .filter(user -> user.getEmail().equalsIgnoreCase(email))
-                        .findFirst()
-                        .orElse(null);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
+            return userMap.get(email.toLowerCase());
         }
     }
 
@@ -94,51 +121,27 @@ public class FileDatabase {
             if (email.getId() == null || email.getId().isEmpty()) {
                 email.setId(UUID.randomUUID().toString());
             }
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(emailsPath, true))) {
-                writer.write(gson.toJson(email));
-                writer.newLine();
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-    }
-
-    public List<Email> loadAllEmails() {
-        synchronized (emailLock) {
-            List<Email> emails = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new FileReader(emailsPath))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.trim().isEmpty())
-                        continue;
-                    try {
-                        emails.add(gson.fromJson(line, Email.class));
-                    } catch (JsonSyntaxException ignored) {
-                        // Skip invalid lines
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return emails;
+            emailList.add(email);
+            return true;
         }
     }
 
     public Email getEmailById(String id) {
-        return loadAllEmails().stream()
-                .filter(email -> email.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        synchronized (emailLock) {
+            return emailList.stream()
+                    .filter(email -> email.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     public List<Email> getEmailsForUser(String email, String type) {
-        return loadAllEmails().stream()
-                .filter(e -> type.equalsIgnoreCase("sent")
-                        ? e.getFrom().equalsIgnoreCase(email)
-                        : e.getTo().equalsIgnoreCase(email))
-                .collect(Collectors.toList());
+        synchronized (emailLock) {
+            return emailList.stream()
+                    .filter(e -> "sent".equalsIgnoreCase(type)
+                            ? e.getFrom().equalsIgnoreCase(email)
+                            : e.getTo().equalsIgnoreCase(email))
+                    .collect(Collectors.toList());
+        }
     }
 }
