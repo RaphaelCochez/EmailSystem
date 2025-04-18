@@ -2,6 +2,7 @@ C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\model\EmailModelTest.j
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\model\UserModelTest.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\data\FileDatabaseEmailTest.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\data\FileDatabaseUserTest.java
+C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\handler\ClientHandlerTest.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\handler\CommandHandlerTest.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\service\AuthServiceTest.java
 C:\Users\Raphael\Documents\Java\EmailSystem\src\test\java\server\service\EmailServiceTest.java
