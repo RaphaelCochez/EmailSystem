@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: server.service.SessionManagerTest
+Test set: server.service.EmailServiceTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s - in server.service.SessionManagerTest
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.023 s - in server.service.EmailServiceTest
