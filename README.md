@@ -56,10 +56,7 @@ https://www.rich-text-to-markdown.com/
 │   └── server.log                       ← Server log output (if enabled)
 │
 └── README.md
-
 ```
-
-* im searching for good unit test methods in java later, for now i just added a structure that might be good
 
 ## Key Principles
 
@@ -71,6 +68,144 @@ https://www.rich-text-to-markdown.com/
 | `utils/`     | Reusable tools (e.g., encryption, JSON, constants)                        |
 | `database/`  | Flat-file DB — stores users and emails                                    |
 | `logs/`      | Optional but good for debugging (`@Slf4j` output)                         |
+
+# Testing Framework
+
+This project uses **JUnit 5 (Jupiter)** for unit testing. The testing approach ensures that core functionality such as authentication, data persistence, session management, and utility functions are thoroughly validated in isolation.
+
+### Test Structure
+
+Unit tests are located under `src/test/java`, mirroring the structure of the main application code. Temporary database files (`test_users.db`, `test_emails.db`) are stored in `src/test/resources` and used during test execution to avoid interfering with production data.
+
+### Test Focus
+
+- File-based persistence tests validate read/write logic for users and emails.
+- Authentication tests ensure password hashing and verification are consistent and secure.
+- Session management tests verify active user session tracking and cleanup during logout or disconnection.
+- Security utility tests validate cryptographic functions such as SHA-256 hashing.
+
+### Running Tests
+
+All tests are configured to run using Maven:
+
+```bash
+mvn test
+```
+
+Run a clean test session from scratch:
+
+```bash
+mvn clean test
+```
+
+Run tests with debug output for detailed information:
+
+```bash
+mvn test --debug
+```
+
+### Test Dependencies
+
+Ensure your `pom.xml` includes the following dependency for JUnit 5:
+
+```xml
+<dependency>
+  <groupId>org.junit.jupiter</groupId>
+  <artifactId>junit-jupiter</artifactId>
+  <version>5.10.0</version>
+  <scope>test</scope>
+</dependency>
+```
+
+---
+
+## Key Testing Requirements (as per CA2 Rubric)
+
+To meet the expectations outlined in the CA2 project brief, the testing framework and approach must validate the following critical components of the system.
+
+### Core Logic and Data Integrity
+
+**Files:**
+
+```
+src/test/java/model/EmailModelTest.java  
+src/test/java/model/EmailModelTest.md  
+src/test/java/model/UserModelTest.java  
+src/test/java/model/UserModelTest.md  
+```
+
+- All model-layer classes must be covered by unit tests.
+- Includes logic for `Email`, `User`, session state, filtering, and persistence.
+- Test both valid and invalid scenarios, including edge cases.
+
+### Persistent Storage
+
+**Files:**
+
+```
+src/test/java/server/data/FileDatabaseEmailTest.java  
+src/test/java/server/data/FileDatabaseUserTest.java  
+src/test/java/server/data/FileDatabaseTest.md  
+```
+
+- Verify reading and writing JSON entries.
+- Ensure file creation and format validity.
+- Isolate test and production data by using temporary `.db` files.
+
+### Authentication and Security
+
+**Files:**
+
+```
+src/test/java/server/service/AuthServiceTest.java  
+src/test/java/server/service/AuthServiceTest.md  
+src/test/java/utills/SecurityUtillsTest.java  
+src/test/java/utills/SecurityUtillsTest.md  
+```
+
+- Validate consistent hash output for known inputs.
+- Ensure password verification logic behaves as expected.
+- Handle malformed salt/hash input formats gracefully.
+
+### Session Management
+
+**Files:**
+
+```
+src/test/java/server/service/AuthServiceTest.java  
+src/test/java/server/service/AuthServiceTest.md  
+src/test/java/server/service/SessionManagerTest.java  
+src/test/java/server/service/SessionManagerTest.md  
+```
+
+- Confirm accurate tracking of login/logout state.
+- Test session invalidation on disconnection.
+- Handle concurrent sessions and avoid state conflicts.
+
+### Exception Handling and Robustness
+
+- Simulate forced socket closures.
+- Simulate abrupt client terminations.
+- Handle corrupted or malformed data gracefully.
+
+### Protocol Compliance *(optional integration testing)*
+
+*To be implemented.*
+
+If included, tests should:
+
+- Simulate complete login → send → list → logout workflows.
+- Validate that protocol commands invoke the correct server-side logic.
+- Ensure graceful handling of invalid, incomplete, or malformed commands.
+
+---
+
+### Notes
+
+- All testing components directly support CA2 requirements for robust backend logic and protocol adherence.
+- Temporary `.db` files are reset before each test to ensure repeatable results.
+- The framework ensures stability under failure conditions such as I/O exceptions and dropped connections.
+
 
 
 # Code Planning: Email CLI Client
@@ -220,9 +355,4 @@ The `Constants.java` file defines all global constants used across the email sys
 | `LOGOUT`                     | Logs out the current user.            |
 | `EXIT`                       | Disconnects the client from server.   |
 
-
-##  Next Steps
-- [ ] Implement `CommandFormatter.java` to reduce duplication in request building.
-- [ ] Build each CLI handler method.
-- [ ] Test login → send → inbox → logout → exit flow.
 
