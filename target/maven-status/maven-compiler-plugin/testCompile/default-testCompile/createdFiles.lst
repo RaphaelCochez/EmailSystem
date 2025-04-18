@@ -1,7 +1,10 @@
-utills\SecurityUtillsTest.class
+model\UserModelTest.class
 server\data\FileDatabaseEmailTest.class
 server\data\FileDatabaseUserTest.class
 server\service\AuthServiceTest$FakeDatabase.class
 server\service\AuthServiceTest.class
 server\service\SessionManagerTest.class
+utills\LogHandler.class
+model\EmailModelTest.class
 server\service\AuthServiceTest$FakeSessionManager.class
+utills\SecurityUtillsTest.class

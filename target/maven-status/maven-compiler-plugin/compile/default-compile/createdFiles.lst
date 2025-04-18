@@ -2,6 +2,7 @@ server\EmailServer.class
 server\handler\ClientHandler.class
 server\service\AuthService.class
 server\service\SessionManager.class
+utills\LogHandler.class
 model\Email.class
 server\data\FileDatabase.class
 server\handler\CommandHandler.class
