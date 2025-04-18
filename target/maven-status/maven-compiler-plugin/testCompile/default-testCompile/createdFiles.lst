@@ -1,11 +1,14 @@
 model\UserModelTest.class
-utills\SecurityUtillsTest.class
 server\data\FileDatabaseEmailTest.class
+server\handler\CommandHandlerTest$FakeDatabase.class
 server\data\FileDatabaseUserTest.class
 server\service\AuthServiceTest$FakeDatabase.class
 server\service\AuthServiceTest.class
 server\service\SessionManagerTest.class
 utills\LogHandler.class
-server\service\EmailServiceTest.class
 model\EmailModelTest.class
 server\service\AuthServiceTest$FakeSessionManager.class
+utills\SecurityUtillsTest.class
+server\handler\CommandHandlerTest$FakeSessionManager.class
+server\service\EmailServiceTest.class
+server\handler\CommandHandlerTest.class

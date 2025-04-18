@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="server.data.FileDatabaseEmailTest" time="0.135" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="server.handler.CommandHandlerTest" time="0.079" tests="9" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="24"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -59,11 +59,13 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="68.0"/>
   </properties>
-  <testcase name="testSaveAndRetrieveEmailFromMemory" classname="server.data.FileDatabaseEmailTest" time="0.115">
-    <system-out><![CDATA[Test DBs prepared:
-- C:\Users\Raphael\Documents\Java\EmailSystem\src\test\resources\test_emails.db
-- C:\Users\Raphael\Documents\Java\EmailSystem\src\test\resources\test_users.db
-Cleaned up test DB files.
-]]></system-out>
-  </testcase>
+  <testcase name="testUnknownCommand" classname="server.handler.CommandHandlerTest" time="0.039"/>
+  <testcase name="testLoginSuccess" classname="server.handler.CommandHandlerTest" time="0.017"/>
+  <testcase name="testLogoutSuccess" classname="server.handler.CommandHandlerTest" time="0.002"/>
+  <testcase name="testReadEmailUnauthorized" classname="server.handler.CommandHandlerTest" time="0.001"/>
+  <testcase name="testInvalidFormat" classname="server.handler.CommandHandlerTest" time="0"/>
+  <testcase name="testRegisterDuplicate" classname="server.handler.CommandHandlerTest" time="0.001"/>
+  <testcase name="testLoginWrongPassword" classname="server.handler.CommandHandlerTest" time="0.002"/>
+  <testcase name="testSendEmailSuccess" classname="server.handler.CommandHandlerTest" time="0.006"/>
+  <testcase name="testRegisterSuccess" classname="server.handler.CommandHandlerTest" time="0.001"/>
 </testsuite>
