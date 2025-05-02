@@ -1,44 +1,62 @@
-# Logging Handler Testing
+# LogHandler Unit Testing
 
-This document outlines the unit testing approach for `LogHandler.java` located in `utills/`.
+This document outlines the unit testing strategy for `LogHandler.java` located in `utils/`.
+
+---
+
+## Status: Implemented in LogHandlerTest.java
 
 ---
 
 ## Objective
 
 Ensure that the `LogHandler` class:
-- Correctly writes log messages to `logs/server.log`
-- Provides non-blocking, asynchronous logging
-- Allows safe shutdown of the logging thread pool
-- Prints selected logs to the terminal using `logAndPrint()`
+- Correctly writes messages to the log file asynchronously
+- Supports terminal output using `logAndPrint()`
+- Properly flushes and shuts down the logging executor
+- Respects a test-specific log path to avoid writing to production logs
 
 ---
 
 ## Tests Implemented
 
-### 1. `testLogWritesToFile`
-- Log a message using `log()`
-- Wait for the asynchronous task to complete
-- Verify the message is written in the log file
+### 1. `testLogFileCreation`
+- Verifies the log file exists after setup
+- Ensures the test does not interfere with production logs
 
-### 2. `testLogAndPrintOutputsCorrectly`
-- Log a message using `logAndPrint()`
-- Wait for async task to finish
-- Check log file contains the correct message
+### 2. `testSimpleLogEntry`
+- Logs a message using `log()`
+- Waits for async execution to complete
+- Confirms the message appears in the test log file
 
-### 3. `testShutdownCleansUpExecutor`
-- Shut down the logging service using `shutdown()`
-- Confirm the method completes without throwing exceptions
+### 3. `testLogAndPrintEntry`
+- Calls `logAndPrint()` with a message
+- Asserts the message is written to the file
+
+### 4. `testMultipleLogEntries`
+- Logs five different messages
+- Confirms all are written correctly after short wait
+
+### 5. `testShutdownFlushesLogs`
+- Logs a message and calls `shutdown()`
+- Verifies the message was flushed to file before shutdown
 
 ---
 
-## Sample Assertions (JUnit)
+## Setup Details
+
+- Overrides `Constants.LOG_FILE_PATH` using reflection
+- Uses `logs/test-server.log` to isolate test logs
+- Calls `LogHandler.resetExecutorForTests()` in `@BeforeAll`
+
+---
+
+## Sample Assertions (JUnit 5)
 
 ```java
-LogHandler.log("Test message");
-Thread.sleep(100); // Wait for async execution
-List<String> lines = Files.readAllLines(Paths.get("logs/server.log"));
+LogHandler.log("Hello test log!");
+TimeUnit.MILLISECONDS.sleep(300);
+List<String> lines = Files.readAllLines(Paths.get("logs/test-server.log"));
 
-assertFalse(lines.isEmpty());
-assertTrue(lines.get(0).contains("Test message"));
+assertTrue(lines.stream().anyMatch(line -> line.contains("Hello test log!")));
 ```
