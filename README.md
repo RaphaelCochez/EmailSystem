@@ -1,64 +1,66 @@
-# ReadMe.md
+# Email System – README
 
-## Docs formatter tool
-https://www.rich-text-to-markdown.com/
+## Docs Formatter Tool
+For clean Markdown formatting, use: https://www.rich-text-to-markdown.com/
+
+---
 
 ## Project Structure
 
-
-
-```pgsql
+```plaintext
 /EmailSystem
 ├── /src
 │   ├── /client
-│   │   ├── EmailClientCLI.java          ← CLI client main logic (handles UI, threads)
-│   │   ├── ServerListener.java          ← Listens for server messages
-│   │   └── CommandFormatter.java        ← Handles user command formatting
+│   │   ├── EmailClientCLI.java          ← CLI client main logic (UI, user commands)
+│   │   ├── ServerListener.java          ← Listens for server responses
+│   │   └── CommandFormatter.java        ← Formats user commands into protocol format
 │   │
 │   ├── /server
-│   │   ├── EmailServer.java             ← Main server class (entry point)
+│   │   ├── EmailServer.java             ← Entry point for the server (thread-per-client)
 │   │   ├── /handler
-│   │   │   ├── ClientHandler.java       ← Thread-per-client handler
-│   │   │   └── CommandHandler.java      ← Handles incoming commands from client
+│   │   │   ├── ClientHandler.java       ← Handles each client connection in a thread
+│   │   │   └── CommandHandler.java      ← Routes and executes commands from clients
 │   │   ├── /protocol
-│   │   │   └── ProtocolConstants.java   ← Command keywords and parsing logic
+│   │   │   └── ProtocolConstants.java   ← Command keywords and response constants
 │   │   ├── /service
-│   │   │   ├── AuthService.java         ← Handles login, registration, logout
-│   │   │   ├── EmailService.java        ← Send, read, inbox/sent logic
-│   │   │   └── SessionManager.java      ← Tracks active user sessions
+│   │   │   ├── AuthService.java         ← Login, registration, logout logic
+│   │   │   ├── EmailService.java        ← Inbox, sent mail, search, read logic
+│   │   │   └── SessionManager.java      ← Tracks active sessions and user states
 │   │   ├── /data
-│   │   │   └── FileDatabase.java        ← Read/write operations for users/emails
+│   │   │   └── FileDatabase.java        ← Manages JSON-based file persistence
 │
 │   ├── /model
-│   │   ├── User.java                    ← Represents a user object
-│   │   └── Email.java                   ← Represents an email object
+│   │   ├── User.java                    ← Data class for user credentials
+│   │   └── Email.java                   ← Data class for email structure
 │
 │   ├── /utils
-│   │   ├── Constants.java               ← App-wide flags and config values
-│   │   ├── JsonUtils.java               ← JSON serialization/deserialization
-│   │   └── SecurityUtils.java           ← Password hashing (SHA-256)
+│   │   ├── Constants.java               ← Central config for paths, flags, CLI, protocol
+│   │   ├── LogHandler.java              ← Async logging handler with shutdown support
+│   │   └── SecurityUtils.java           ← Salted password hashing and verification
 │
 ├── /resources
-│   ├── users.db                         ← Flat file storing user credentials
-│   └── emails.db                        ← Flat file storing email records
+│   ├── users.db                         ← Flat file for users
+│   └── emails.db                        ← Flat file for emails
 │
 ├── /test
 │   ├── /java
-│   │   ├── /server/data
-│   │   │   ├── FileDatabaseEmailTest.java ← Unit test for saving/loading emails
-│   │   │   └── FileDatabaseUserTest.java  ← Unit test for user persistence logic
-│   │   └── /...                         ← Additional tests go here
+│   │   ├── /model                       ← Model unit tests
+│   │   ├── /server/data                 ← FileDatabase tests
+│   │   ├── /server/service              ← Auth, Email, Session tests
+│   │   ├── /server/handler              ← ClientHandler, CommandHandler tests
+│   │   └── /utils                       ← Logging and security utility tests
 │   └── /resources
-│       ├── test_users.db               ← Temp user DB for tests
-│       └── test_emails.db              ← Temp email DB for tests
+│       ├── test_users.db                ← Isolated test data
+│       └── test_emails.db
 │
 ├── /logs
-│   └── server.log                       ← Server log output (if enabled)
+│   └── server.log                       ← Log output (optional)
 │
 └── README.md
 ```
 
-## Key Principles
+
+## Key structure
 
 | **Folder**   | **Purpose**                                                              |
 |--------------|---------------------------------------------------------------------------|
@@ -69,9 +71,41 @@ https://www.rich-text-to-markdown.com/
 | `database/`  | Flat-file DB — stores users and emails                                    |
 | `logs/`      | Optional but good for debugging (`@Slf4j` output)                         |
 
+## Design Rationale
+The server follows a modular, layered architecture to enable clean unit testing, code isolation, and maintainable logic separation.
+
+Each class has a single responsibility:
+
+* `AuthService` handles security/auth
+
+* `EmailService` handles message logic
+
+* `SessionManager` manages per-user state
+
+* `FileDatabase` handles I/O only at startup/shutdown
+
+* `CommandHandler` is the glue between input and services
+
 # Testing Framework
 
 This project uses **JUnit 5 (Jupiter)** for unit testing. The testing approach ensures that core functionality such as authentication, data persistence, session management, and utility functions are thoroughly validated in isolation.
+
+Also, tests use isolated test_users.db and test_emails.db files.
+
+**Tests cover:**
+
+* Data model integrity
+
+* File persistence
+
+* Authentication and password hashing
+
+* Session management
+
+* Command routing
+
+* Logging robustness
+
 
 ### Test Structure
 
@@ -143,9 +177,10 @@ src/test/java/model/UserModelTest.md
 **Files:**
 
 ```
-src/test/java/server/data/FileDatabaseEmailTest.java  
+src/test/java/server/data/FileDatabaseEmailTest.java
+src/test/java/server/data/FileDatabaseEmailTest.md    
 src/test/java/server/data/FileDatabaseUserTest.java  
-src/test/java/server/data/FileDatabaseTest.md  
+src/test/java/server/data/FileDatabaseUserTest.md  
 ```
 
 - Verify reading and writing JSON entries.
@@ -189,23 +224,39 @@ src/test/java/server/service/SessionManagerTest.md
 - Handle corrupted or malformed data gracefully.
 
 ### Protocol Compliance *(optional integration testing)*
+**Files:**
+```
+src/test/java/server/handler/CommandHandlerTest.java  
+src/test/java/server/handler/ClientHandlerTest.java  
+src/test/java/server/handler/CommandHandlerTest.md  
+src/test/java/server/handler/ClientHandlerTest.md  
+```
+- Simulates complete user workflows: register → login → send → read → logout.
 
-*To be implemented.*
+- Validates that each command invokes correct service logic and returns expected responses.
 
-If included, tests should:
+- Ensures graceful handling of malformed JSON, invalid credentials, unknown commands, and unauthorized access.
 
-- Simulate complete login → send → list → logout workflows.
-- Validate that protocol commands invoke the correct server-side logic.
-- Ensure graceful handling of invalid, incomplete, or malformed commands.
+- Confirms socket input is processed and flushed correctly in ClientHandler.
+
+- Verifies compliance with custom TCP command protocol format (COMMAND%%{JSON}).
 
 ---
 
-### Notes
+### Unit test notes
 
 - All testing components directly support CA2 requirements for robust backend logic and protocol adherence.
 - Temporary `.db` files are reset before each test to ensure repeatable results.
 - The framework ensures stability under failure conditions such as I/O exceptions and dropped connections.
 
+### Thread Safety
+
+- All core services (`SessionManager`, `FileDatabase`, `LogHandler`) are implemented with thread safety in mind.
+- Session state is stored in `ConcurrentHashMap`, ensuring safe concurrent access.
+- Disk I/O operations are synchronized by internal locks (`userLock`, `emailLock`) in `FileDatabase`.
+- Logging uses a dedicated single-threaded executor to prevent blocking and ensure flush-safe writes.
+
+While the system was not stress-tested under simultaneous client threads, all per-thread logic was isolated and verified in tests. Race conditions were mitigated by design, and unit tests confirmed stable operation across simulated concurrent command flows.
 
 
 # Code Planning: Email CLI Client
