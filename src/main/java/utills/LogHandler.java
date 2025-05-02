@@ -9,9 +9,13 @@ import java.util.concurrent.*;
 public class LogHandler {
 
     private static final String LOG_FILE = "logs/server.log";
-    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
     static {
+        init();
+    }
+
+    private static void init() {
         try {
             Files.createDirectories(Paths.get("logs"));
             new File(LOG_FILE).createNewFile();
@@ -25,6 +29,10 @@ public class LogHandler {
     }
 
     public static void log(String message) {
+        if (executor.isShutdown()) {
+            System.err.println("Warning: LogHandler executor is shut down, cannot log: " + message);
+            return;
+        }
         String logEntry = timestamp() + " " + message;
         executor.submit(() -> {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE, true))) {
@@ -37,8 +45,7 @@ public class LogHandler {
     }
 
     public static void logAndPrint(String message) {
-        String logEntry = timestamp() + " " + message;
-        System.out.println(logEntry);
+        System.out.println(timestamp() + " " + message);
         log(message);
     }
 
@@ -48,9 +55,18 @@ public class LogHandler {
         try {
             if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
+                if (!executor.awaitTermination(3, TimeUnit.SECONDS))
+                    System.err.println("Log handler did not terminate properly.");
             }
         } catch (InterruptedException e) {
             executor.shutdownNow();
+        }
+    }
+
+    // TESTING ONLY
+    public static void resetExecutorForTests() {
+        if (executor.isShutdown() || executor.isTerminated()) {
+            executor = Executors.newSingleThreadExecutor();
         }
     }
 }

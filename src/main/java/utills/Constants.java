@@ -2,6 +2,9 @@ package utills;
 
 public class Constants {
 
+        // Define your file paths and passwords
+        public static final String KEYSTORE_PATH = "resources/server.p12"; // Keystore path
+        public static final String KEYSTORE_PASSWORD = "d00285437"; // Keystore password
         // --- Encryption ---
         public static final String HASH_ALGORITHM = "SHA-256";
         public static final String SALT_DELIMITER = "$";
