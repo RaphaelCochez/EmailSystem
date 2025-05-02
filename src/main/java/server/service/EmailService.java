@@ -2,6 +2,7 @@ package server.service;
 
 import model.Email;
 import server.data.FileDatabase;
+import utills.LogHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +26,7 @@ public class EmailService {
      * Sends an email if recipient exists and all required fields are valid.
      *
      * @param email the Email object to send
-     * @return true if sent successfully, false if validation fails or recipient not
-     *         found
+     * @return true if sent successfully, false otherwise
      */
     public boolean sendEmail(Email email) {
         if (email == null ||
@@ -35,10 +35,12 @@ public class EmailService {
                 email.getSubject() == null ||
                 email.getBody() == null ||
                 email.getTimestamp() == null) {
+            LogHandler.log("Failed to send email: Missing required fields.");
             return false;
         }
 
         if (fileDatabase.getUser(email.getTo()) == null) {
+            LogHandler.log("Failed to send email: Recipient not found - " + email.getTo());
             return false;
         }
 
@@ -46,30 +48,47 @@ public class EmailService {
             email.setId(UUID.randomUUID().toString());
         }
 
-        return fileDatabase.saveEmail(email);
+        boolean success = fileDatabase.saveEmail(email);
+        if (success) {
+            LogHandler.log(
+                    "Email sent from " + email.getFrom() + " to " + email.getTo() + " [ID: " + email.getId() + "]");
+        } else {
+            LogHandler.log("Failed to save email to file database.");
+        }
+
+        return success;
     }
 
     /**
      * Retrieves emails received by a user.
      */
     public List<Email> getReceivedEmails(String userEmail) {
-        return fileDatabase.getEmailsForUser(userEmail, "received");
+        String normalized = userEmail.toLowerCase(Locale.ROOT);
+        return fileDatabase.getEmailsForUser(normalized, "received");
     }
 
     /**
      * Retrieves emails sent by a user.
      */
     public List<Email> getSentEmails(String userEmail) {
-        return fileDatabase.getEmailsForUser(userEmail, "sent");
+        String normalized = userEmail.toLowerCase(Locale.ROOT);
+        return fileDatabase.getEmailsForUser(normalized, "sent");
     }
 
     /**
      * Searches either received or sent emails by keyword.
      */
     public List<Email> searchEmails(String userEmail, String type, String keyword) {
-        List<Email> base = fileDatabase.getEmailsForUser(userEmail, type);
-        if (base == null)
+        if (keyword == null || keyword.isBlank()) {
+            LogHandler.log("Email search aborted: Empty keyword.");
             return new ArrayList<>();
+        }
+
+        List<Email> base = fileDatabase.getEmailsForUser(userEmail.toLowerCase(Locale.ROOT), type);
+        if (base == null) {
+            LogHandler.log("Email search failed: Invalid user or email type - " + userEmail + " / " + type);
+            return new ArrayList<>();
+        }
 
         final String keywordLower = keyword.toLowerCase(Locale.ROOT);
         return base.stream()
@@ -86,13 +105,16 @@ public class EmailService {
      */
     public Email getEmailById(String userEmail, String id) {
         Email email = fileDatabase.getEmailById(id);
-        if (email == null)
+        if (email == null) {
+            LogHandler.log("Email read failed: Email ID not found - " + id);
             return null;
+        }
 
         if (userEmail.equalsIgnoreCase(email.getTo()) || userEmail.equalsIgnoreCase(email.getFrom())) {
             return email;
         }
 
+        LogHandler.log("Email read blocked: Access denied to user " + userEmail + " for email ID " + id);
         return null; // Access denied
     }
 }
