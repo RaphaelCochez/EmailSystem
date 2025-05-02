@@ -1,8 +1,13 @@
 package model;
 
+import java.util.Objects;
+
 public class User {
     private String email;
-    private String password; // This field might be raw or hashed depending on usage
+    private String password; // hashed or raw depending on context
+
+    public User() {
+    } // Required for Gson
 
     public User(String email, String password) {
         this.email = email;
@@ -19,5 +24,20 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof User))
+            return false;
+        User user = (User) o;
+        return email != null && email.equalsIgnoreCase(user.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(email == null ? null : email.toLowerCase());
     }
 }

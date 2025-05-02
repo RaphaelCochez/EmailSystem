@@ -1,5 +1,10 @@
 package model;
 
+import utills.Constants;
+
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
 public class Email {
     private String id;
     private String to;
@@ -11,9 +16,19 @@ public class Email {
     private boolean edited;
 
     public Email() {
-    } // Default constructor required for Gson
+    } // Required for Gson
 
-    // Optionally add constructor, getters, setters, not needed for now
+    public Email(String id, String to, String from, String subject, String body, String timestamp, boolean visible,
+            boolean edited) {
+        this.id = id;
+        this.to = to;
+        this.from = from;
+        this.subject = subject;
+        this.body = body;
+        this.setTimestamp(timestamp); // validate format
+        this.visible = visible;
+        this.edited = edited;
+    }
 
     public String getId() {
         return id;
@@ -60,7 +75,13 @@ public class Email {
     }
 
     public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp; // check in CA
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.TIMESTAMP_FORMAT);
+            formatter.parse(timestamp);
+            this.timestamp = timestamp;
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid timestamp format. Expected: " + Constants.TIMESTAMP_FORMAT);
+        }
     }
 
     public boolean isVisible() {
