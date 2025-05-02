@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import model.User;
 import server.data.FileDatabase;
 import server.protocol.ProtocolConstants;
-import utills.SecurityUtills;
+import utils.SecurityUtills;
 
 import java.io.PrintWriter;
 import java.net.Socket;

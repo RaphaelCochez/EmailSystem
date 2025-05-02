@@ -1,6 +1,6 @@
 // inspiration from https://stackoverflow.com/questions/69791042/how-to-validate-user-password-after-hashing-using-sha-256-salted-in-java
 
-package utills;
+package utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

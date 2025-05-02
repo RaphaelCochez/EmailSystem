@@ -1,9 +1,9 @@
 package model;
 
-import utills.Constants;
-
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+
+import utils.Constants;
 
 public class Email {
     private String id;

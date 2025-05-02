@@ -5,7 +5,7 @@ import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.data.FileDatabase;
-import utills.SecurityUtills;
+import utils.SecurityUtills;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

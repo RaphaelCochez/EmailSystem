@@ -1,12 +1,12 @@
 package server.service;
 
-import utills.LogHandler;
-
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import utils.LogHandler;
 
 /**
  * SessionManager keeps track of active user sessions,

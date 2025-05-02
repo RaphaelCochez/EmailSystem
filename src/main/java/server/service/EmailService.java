@@ -2,7 +2,7 @@ package server.service;
 
 import model.Email;
 import server.data.FileDatabase;
-import utills.LogHandler;
+import utils.LogHandler;
 
 import java.util.ArrayList;
 import java.util.List;

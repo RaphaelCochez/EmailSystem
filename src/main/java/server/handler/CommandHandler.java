@@ -4,7 +4,7 @@ import model.Email;
 import server.service.AuthService;
 import server.service.EmailService;
 import server.service.SessionManager;
-import utills.LogHandler;
+import utils.LogHandler;
 
 import java.io.PrintWriter;
 import java.net.Socket;

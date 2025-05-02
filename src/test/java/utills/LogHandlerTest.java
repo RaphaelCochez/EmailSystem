@@ -1,6 +1,9 @@
 package utills;
 
 import org.junit.jupiter.api.*;
+
+import utils.LogHandler;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.List;

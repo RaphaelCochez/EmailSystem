@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import model.Email;
 import model.User;
-import utills.LogHandler;
+import utils.LogHandler;
 
 import java.io.*;
 import java.util.*;
