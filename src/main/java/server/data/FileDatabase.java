@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import model.Email;
 import model.User;
+import utills.LogHandler;
 
 import java.io.*;
 import java.util.*;
@@ -43,7 +44,7 @@ public class FileDatabase {
                 file.createNewFile();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHandler.log("Error ensuring file exists: " + e.getMessage());
         }
     }
 
@@ -57,7 +58,7 @@ public class FileDatabase {
                         .filter(Objects::nonNull)
                         .forEach(user -> userMap.put(user.getEmail().toLowerCase(), user));
             } catch (IOException e) {
-                e.printStackTrace();
+                LogHandler.log("Error loading users: " + e.getMessage());
             }
         }
 
@@ -69,7 +70,7 @@ public class FileDatabase {
                         .filter(Objects::nonNull)
                         .forEach(emailList::add);
             } catch (IOException e) {
-                e.printStackTrace();
+                LogHandler.log("Error loading emails: " + e.getMessage());
             }
         }
     }
@@ -83,7 +84,7 @@ public class FileDatabase {
                     writer.newLine();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LogHandler.log("Error saving users: " + e.getMessage());
             }
         }
 
@@ -94,7 +95,7 @@ public class FileDatabase {
                     writer.newLine();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LogHandler.log("Error saving emails: " + e.getMessage());
             }
         }
     }

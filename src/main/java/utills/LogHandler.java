@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 
 public class LogHandler {
 
-    private static final String LOG_FILE = "logs/server.log";
+    private static final String LOG_FILE = Constants.LOG_FILE_PATH;
     private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
     static {
@@ -46,6 +46,7 @@ public class LogHandler {
 
     public static void logAndPrint(String message) {
         System.out.println(timestamp() + " " + message);
+        System.out.flush();
         log(message);
     }
 

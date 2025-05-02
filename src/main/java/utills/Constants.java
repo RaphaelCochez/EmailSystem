@@ -2,10 +2,7 @@ package utills;
 
 public class Constants {
 
-        // Define your file paths and passwords
-        public static final String KEYSTORE_PATH = "resources/server.p12"; // Keystore path
-        public static final String KEYSTORE_PASSWORD = "d00285437"; // Keystore password
-        // --- Encryption ---
+        // === Encryption ===
         public static final String HASH_ALGORITHM = "SHA-256";
         public static final String SALT_DELIMITER = "$";
         public static final int SALT_LENGTH = 16; // bytes
@@ -15,6 +12,8 @@ public class Constants {
         public static final int MAX_CLIENTS = 50;
 
         // === File Paths ===
+        public static final String KEYSTORE_PATH = "resources/server.p12";
+        public static final String KEYSTORE_PASSWORD = "d00285437"; // NOTE: for CA only
         public static final String USERS_DB_PATH = "src/main/resources/users.db";
         public static final String EMAILS_DB_PATH = "src/main/resources/emails.db";
         public static final String LOG_FILE_PATH = "logs/server.log";
@@ -35,20 +34,18 @@ public class Constants {
                         - SEND <to> <subject> <body>
                         - LIST [sent|inbox]
                         - READ <emailId>
-                        - DELETE <emailId>
                         - SEARCH <keyword>
                         - EXIT
                         """;
 
-        // === Session Token Handling ===
-        public static final String SESSION_TOKEN_HEADER = "Session-Token";
-
-        // === Misc ===
+        // === Time Format ===
         public static final String TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
-        // --- Environment Flags ---
-        public static final boolean DEBUG_MODE = true; // Enables verbose logging
-        public static final boolean IS_TEST_ENVIRONMENT = false; // Set true during integration tests
-        public static final boolean ENABLE_TLS = false; // Future use for encrypted socket communication
+        // === Environment Flags ===
+        public static final boolean DEBUG_MODE = true;
+        public static final boolean IS_TEST_ENVIRONMENT = false;
 
+        // === Future Use ===
+        public static final boolean ENABLE_TLS = false;
+        public static final String SESSION_TOKEN_HEADER = "Session-Token";
 }
