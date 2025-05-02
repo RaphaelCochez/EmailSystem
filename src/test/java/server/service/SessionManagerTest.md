@@ -4,32 +4,45 @@ This document outlines the unit testing strategy for the `SessionManager` class 
 
 ---
 
+## Status: ✅ Implemented in SessionManagerTest.java
+
+---
+
 ## Objective
 
 Ensure that the `SessionManager` class:
-- Properly manages user login sessions via socket associations
-- Supports login, logout, and active session tracking
-- Handles socket-to-email and email-to-socket mapping accurately
+- Tracks active sessions via email-to-socket mapping
+- Allows users to start and end sessions
+- Supports session lookup and verification
 
 ---
 
 ## Tests Implemented
 
-### 1. Login and IsLoggedIn Test
-- Log in a user with a mocked socket
+### 1. `testStartSession`
+- Start a session using `startSession(email, socket)`
 - Assert that `isLoggedIn(email)` returns `true`
 
-### 2. Get Socket by Email Test
-- After login, retrieve the socket associated with a given email
-- Assert that the returned socket matches the original
+### 2. `testGetSessionSocket`
+- After starting a session, retrieve the socket using `getSessionSocket(email)`
+- Assert the socket matches the original
 
-### 3. Logout Test
-- Log in a user, then log them out
-- Assert that they are no longer considered logged in
+### 3. `testEndSession`
+- Start a session, then end it using `endSession(email)`
+- Assert that `isLoggedIn(email)` returns `false`
+- Assert that `getSessionSocket(email)` returns `null`
 
-### 4. Get Email by Socket Test
-- After login, retrieve the email based on the socket object
-- Assert that the correct email is returned
+### 4. `testIsLoggedInFalseByDefault`
+- Check `isLoggedIn()` on an email that never started a session
+- Assert it returns `false`
+
+
+### 5. `testClearAllSessions`
+- Start multiple sessions
+- Call `clearAllSessions()`
+- Assert none remain logged in
+
+(Not yet implemented — recommended)
 
 ---
 
@@ -37,13 +50,14 @@ Ensure that the `SessionManager` class:
 
 ```java
 SessionManager sessionManager = new SessionManager();
-Socket mockSocket = mock(Socket.class);
+Socket dummySocket = new Socket();
 
-sessionManager.login("user@example.com", mockSocket);
-
+sessionManager.startSession("user@example.com", dummySocket);
 assertTrue(sessionManager.isLoggedIn("user@example.com"));
-assertEquals(mockSocket, sessionManager.getSocket("user@example.com"));
-assertEquals("user@example.com", sessionManager.getEmail(mockSocket));
 
-sessionManager.logout("user@example.com");
+Socket retrieved = sessionManager.getSessionSocket("user@example.com");
+assertEquals(dummySocket, retrieved);
+
+sessionManager.endSession("user@example.com");
 assertFalse(sessionManager.isLoggedIn("user@example.com"));
+assertNull(sessionManager.getSessionSocket("user@example.com"));

@@ -43,4 +43,16 @@ class SessionManagerTest {
     void testIsLoggedInFalseByDefault() {
         assertFalse(sessionManager.isLoggedIn("not@loggedin.com"), "User should not be logged in by default");
     }
+
+    @Test
+    void testClearAllSessions() {
+        sessionManager.startSession("user1@example.com", new Socket());
+        sessionManager.startSession("user2@example.com", new Socket());
+
+        sessionManager.clearAllSessions();
+
+        assertFalse(sessionManager.isLoggedIn("user1@example.com"));
+        assertFalse(sessionManager.isLoggedIn("user2@example.com"));
+    }
+
 }
