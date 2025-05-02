@@ -38,6 +38,7 @@ public class ProtocolConstants {
     public static final String RESP_RETRIEVE_EMAILS_FAIL = "RETRIEVE_EMAILS_FAIL";
     public static final String RESP_READ_EMAIL_FAIL = "READ_EMAIL_FAIL";
     public static final String RESP_SEARCH_EMAIL_FAIL = "SEARCH_EMAIL_FAIL";
+    public static final String RESP_INVALID_FORMAT = "INVALID_FORMAT";
 
     // === Example JSON Payloads (for development reference) ===
     public static final String JSON_REGISTER_EXAMPLE = "{\"email\":\"<user@example.com>\",\"password\":\"<password>\"}";

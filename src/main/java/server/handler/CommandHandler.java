@@ -35,8 +35,8 @@ public class CommandHandler {
 
     public void handle(String input, Socket clientSocket, PrintWriter out) {
         if (input == null || !input.contains(DELIMITER)) {
-            LogHandler.log("Invalid input format from client " + clientSocket.getRemoteSocketAddress() + ": " + input);
-            out.println("INVALID_FORMAT" + DELIMITER + "Missing delimiter");
+            LogHandler.log("Malformed command from client " + clientSocket.getRemoteSocketAddress() + ": " + input);
+            out.println(RESP_INVALID_FORMAT + DELIMITER + "Missing delimiter");
             return;
         }
 
@@ -51,11 +51,17 @@ public class CommandHandler {
                 case CMD_REGISTER:
                     authService.handleRegister(payload, out);
                     break;
+
                 case CMD_LOGIN:
                     authService.handleLogin(payload, clientSocket, out);
                     break;
-                case CMD_SEND_EMAIL:
+
+                case CMD_SEND_EMAIL: {
                     Email email = gson.fromJson(json, Email.class);
+                    if (!sessionManager.isLoggedIn(email.getFrom())) {
+                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        return;
+                    }
                     if (emailService.sendEmail(email)) {
                         out.println(RESP_SEND_EMAIL_SUCCESS);
                     } else {
@@ -63,29 +69,63 @@ public class CommandHandler {
                         out.println(RESP_SEND_EMAIL_FAIL + DELIMITER + "Validation or recipient failure");
                     }
                     break;
-                case CMD_RETRIEVE_EMAILS:
-                    String type = json.get("type").getAsString();
-                    String userEmail = json.get("email").getAsString();
+                }
+
+                case CMD_RETRIEVE_EMAILS: {
+                    String type = json.has("type") ? json.get("type").getAsString() : null;
+                    String userEmail = json.has("email") ? json.get("email").getAsString() : null;
+                    if (type == null || userEmail == null) {
+                        out.println(RESP_RETRIEVE_EMAILS_FAIL + DELIMITER + "Missing fields: 'type' or 'email'");
+                        return;
+                    }
+                    if (!sessionManager.isLoggedIn(userEmail)) {
+                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        return;
+                    }
                     List<Email> emails = "received".equalsIgnoreCase(type)
                             ? emailService.getReceivedEmails(userEmail)
                             : emailService.getSentEmails(userEmail);
                     out.println(RESP_RETRIEVE_EMAILS_SUCCESS + DELIMITER + gson.toJson(emails));
                     break;
-                case CMD_SEARCH_EMAIL:
-                    List<Email> searchResults = emailService.searchEmails(
-                            json.get("email").getAsString(),
-                            json.get("type").getAsString(),
-                            json.get("keyword").getAsString());
+                }
+
+                case CMD_SEARCH_EMAIL: {
+                    String userEmail = json.has("email") ? json.get("email").getAsString() : null;
+                    String type = json.has("type") ? json.get("type").getAsString() : null;
+                    String keyword = json.has("keyword") ? json.get("keyword").getAsString() : null;
+
+                    if (userEmail == null || type == null || keyword == null) {
+                        out.println(RESP_SEARCH_EMAIL_FAIL + DELIMITER + "Missing fields");
+                        return;
+                    }
+                    if (!sessionManager.isLoggedIn(userEmail)) {
+                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        return;
+                    }
+
+                    List<Email> searchResults = emailService.searchEmails(userEmail, type, keyword);
                     if (searchResults.isEmpty()) {
-                        LogHandler.log("SEARCH_EMAIL: no results for user " + json.get("email").getAsString());
+                        LogHandler.log("SEARCH_EMAIL: no results for user " + userEmail);
                         out.println(RESP_SEARCH_EMAIL_FAIL + DELIMITER + "No emails found matching keyword");
                     } else {
                         out.println(RESP_SEARCH_EMAIL_SUCCESS + DELIMITER + gson.toJson(searchResults));
                     }
                     break;
-                case CMD_READ_EMAIL:
-                    String reader = json.get("email").getAsString();
-                    String id = json.get("id").getAsString();
+                }
+
+                case CMD_READ_EMAIL: {
+                    String reader = json.has("email") ? json.get("email").getAsString() : null;
+                    String id = json.has("id") ? json.get("id").getAsString() : null;
+
+                    if (reader == null || id == null) {
+                        out.println(RESP_READ_EMAIL_FAIL + DELIMITER + "Missing 'email' or 'id'");
+                        return;
+                    }
+                    if (!sessionManager.isLoggedIn(reader)) {
+                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        return;
+                    }
+
                     Email result = emailService.getEmailById(reader, id);
                     if (result != null) {
                         out.println(RESP_READ_EMAIL_SUCCESS + DELIMITER + gson.toJson(result));
@@ -94,25 +134,34 @@ public class CommandHandler {
                         out.println(RESP_READ_EMAIL_FAIL + DELIMITER + "Email not found or access denied");
                     }
                     break;
-                case CMD_LOGOUT:
-                    String logoutEmail = json.get("email").getAsString();
+                }
+
+                case CMD_LOGOUT: {
+                    String logoutEmail = json.has("email") ? json.get("email").getAsString() : null;
+                    if (logoutEmail == null) {
+                        out.println(RESP_LOGOUT_FAIL + DELIMITER + "Missing 'email' field");
+                        return;
+                    }
                     sessionManager.endSession(logoutEmail);
                     LogHandler.log("User logged out: " + logoutEmail);
                     out.println(RESP_LOGOUT_SUCCESS);
                     break;
+                }
+
                 case CMD_EXIT:
                     LogHandler.log("EXIT command received from client: " + clientSocket.getRemoteSocketAddress());
                     out.println(RESP_EXIT_SUCCESS);
                     break;
+
                 default:
                     LogHandler.log("Unknown command received from client: " + command);
                     out.println("UNKNOWN_COMMAND" + DELIMITER + "Command not recognized");
                     break;
             }
         } catch (Exception e) {
-            LogHandler.log("Command [" + command + "] failed for socket " + clientSocket.getRemoteSocketAddress() + ": "
+            LogHandler.log("Command [" + input + "] failed from client " + clientSocket.getRemoteSocketAddress() + ": "
                     + e.getMessage());
-            out.println(command + "_FAIL" + DELIMITER + e.getMessage());
+            out.println(command + "_FAIL" + DELIMITER + "Malformed JSON or internal error");
         }
     }
 }
