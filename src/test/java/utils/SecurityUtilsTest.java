@@ -6,7 +6,7 @@ import utils.SecurityUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SecurityUtillsTest {
+class SecurityUtilsTest {
 
     @Test
     void testHashPasswordAndVerifySuccess() {

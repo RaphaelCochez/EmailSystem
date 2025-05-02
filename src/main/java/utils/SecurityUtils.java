@@ -16,6 +16,7 @@ public class SecurityUtils {
             byte[] hashedBytes = digest.digest(password.getBytes());
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
+            LogHandler.log("Hashing failed: " + e.getMessage());
             throw new RuntimeException("Error hashing password", e);
         }
     }
