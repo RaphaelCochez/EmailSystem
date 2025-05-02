@@ -39,4 +39,16 @@ class SecurityUtilsTest {
 
         assertNotEquals(hash1, hash2);
     }
+
+    @Test
+
+    void testSameInputProducesSameHashWithSameSalt() {
+        String password = "Repeatable";
+        String salt = SecurityUtils.generateSalt();
+
+        String hash1 = SecurityUtils.hashPassword(password, salt);
+        String hash2 = SecurityUtils.hashPassword(password, salt);
+
+        assertEquals(hash1, hash2);
+    }
 }
