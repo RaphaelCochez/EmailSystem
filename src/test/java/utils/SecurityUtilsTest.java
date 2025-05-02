@@ -2,8 +2,6 @@ package utils;
 
 import org.junit.jupiter.api.Test;
 
-import utils.SecurityUtils;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class SecurityUtilsTest {
