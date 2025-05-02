@@ -17,6 +17,7 @@ class FileDatabaseEmailTest {
     private static final Path TEMP_USERS_DB = Path.of("src", "test", "resources", "test_users.db");
 
     private FileDatabase fileDatabase;
+    private Email email;
 
     @BeforeEach
     void setUp() {
@@ -37,12 +38,12 @@ class FileDatabaseEmailTest {
         }
 
         fileDatabase = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
-        fileDatabase.loadAll(); // Load any initial state (empty for this test)
+        fileDatabase.loadAll();
     }
 
     @Test
-    void testSaveAndRetrieveEmailFromMemory() {
-        Email email = new Email();
+    void testSaveRetrieveAndReloadEmail() {
+        email = new Email();
         email.setId(UUID.randomUUID().toString());
         email.setTo("recipient@example.com");
         email.setFrom("sender@example.com");
@@ -52,21 +53,40 @@ class FileDatabaseEmailTest {
         email.setVisible(true);
         email.setEdited(false);
 
+        // Save to memory
         boolean saved = fileDatabase.saveEmail(email);
         assertTrue(saved, "Email should be saved successfully");
 
-        List<Email> loaded = fileDatabase.getEmailsForUser("recipient@example.com", "received");
-        assertEquals(1, loaded.size(), "One email should be retrieved for recipient");
+        // Load from memory
+        List<Email> inMemory = fileDatabase.getEmailsForUser("recipient@example.com", "received");
+        assertEquals(1, inMemory.size(), "One email should be retrieved for recipient (memory)");
 
-        Email loadedEmail = loaded.get(0);
-        assertEquals(email.getId(), loadedEmail.getId());
-        assertEquals(email.getTo(), loadedEmail.getTo());
-        assertEquals(email.getFrom(), loadedEmail.getFrom());
-        assertEquals(email.getSubject(), loadedEmail.getSubject());
-        assertEquals(email.getBody(), loadedEmail.getBody());
-        assertEquals(email.getTimestamp(), loadedEmail.getTimestamp());
-        assertTrue(loadedEmail.isVisible());
-        assertFalse(loadedEmail.isEdited());
+        Email loaded = inMemory.get(0);
+        assertEmailEquals(email, loaded);
+
+        // Persist to disk
+        fileDatabase.saveAll();
+
+        // Reload from disk
+        FileDatabase reloadedDb = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
+        reloadedDb.loadAll();
+
+        List<Email> reloaded = reloadedDb.getEmailsForUser("recipient@example.com", "received");
+        assertEquals(1, reloaded.size(), "Reloaded DB should retrieve the email from disk");
+
+        Email reloadedEmail = reloaded.get(0);
+        assertEmailEquals(email, reloadedEmail);
+    }
+
+    private void assertEmailEquals(Email expected, Email actual) {
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getTo(), actual.getTo());
+        assertEquals(expected.getFrom(), actual.getFrom());
+        assertEquals(expected.getSubject(), actual.getSubject());
+        assertEquals(expected.getBody(), actual.getBody());
+        assertEquals(expected.getTimestamp(), actual.getTimestamp());
+        assertEquals(expected.isVisible(), actual.isVisible());
+        assertEquals(expected.isEdited(), actual.isEdited());
     }
 
     @AfterEach

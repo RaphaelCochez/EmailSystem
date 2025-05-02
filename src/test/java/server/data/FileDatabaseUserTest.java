@@ -56,6 +56,24 @@ class FileDatabaseUserTest {
         assertFalse(secondSave, "Duplicate user should not be saved");
     }
 
+    @Test
+    void testSaveUserAndReloadFromDisk() {
+        User user = new User("reload@example.com", "salt$hash");
+
+        boolean saved = fileDatabase.saveUser(user);
+        assertTrue(saved, "User should be saved to memory");
+
+        fileDatabase.saveAll(); // flush to disk
+
+        FileDatabase reloadedDb = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
+        reloadedDb.loadAll();
+
+        User loaded = reloadedDb.getUser("reload@example.com");
+        assertNotNull(loaded, "User should be found after reload");
+        assertEquals("reload@example.com", loaded.getEmail());
+        assertEquals("salt$hash", loaded.getPassword());
+    }
+
     @AfterEach
     void tearDown() {
         try {
