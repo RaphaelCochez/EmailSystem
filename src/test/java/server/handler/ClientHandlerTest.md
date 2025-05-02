@@ -1,68 +1,71 @@
-# ClientHandler Testing
+# ClientHandler Test Plan
 
-This document outlines the unit testing strategy for the `ClientHandler` class in `server/handler/ClientHandler.java`.
+This document outlines the unit testing strategy for `ClientHandler.java` in the `server/handler` package.
+
+---
+
+## Status: Fully Implemented in ClientHandlerTest.java
 
 ---
 
 ## Objective
 
 Ensure that the `ClientHandler` class:
-- Handles client socket communication in an isolated thread
-- Delegates command processing to `CommandHandler`
-- Processes multiple commands per session
-- Produces valid output on output stream
-- Cleans up gracefully after client disconnects or errors
+- Reads commands from a client socket
+- Delegates each command to the `CommandHandler`
+- Handles multi-line protocol commands correctly
+- Writes responses to the socket output stream
+- Handles I/O exceptions and malformed input gracefully
+- Terminates cleanly on end-of-input (EOF)
 
 ---
 
 ## Tests Implemented
 
-### 1. Valid Command Execution
-- Simulate input of two commands: `REGISTER%%...` and `EXIT%%{}`
-- Use a mock socket and a fake command handler
-- Assert that:
-  - `REGISTER` command is parsed and handled
-  - `EXIT` command is parsed and handled
-  - Output stream includes `EXIT_SUCCESS`
+### 1. `testClientHandlerProcessesValidCommands`
+- Simulates multiple valid commands (e.g., `REGISTER`, `EXIT`)
+- Asserts each command is delegated to `CommandHandler`
+- Confirms `EXIT_SUCCESS` is printed to output
 
-### 2. Exception Handling
-- Simulate a socket that throws an IOException on input stream
-- Ensure `ClientHandler.run()` does not crash
-- Validate no unhandled exceptions are thrown
+### 2. `testClientHandlerHandlesIOException`
+- Uses a fake socket that throws an `IOException` on input
+- Asserts that `run()` does not throw and fails gracefully
+
+### 3. `testMalformedJsonCommandHandledGracefully`
+- Simulates a malformed JSON payload in a command
+- Asserts that `ClientHandler` still calls `CommandHandler`
+- Verifies the session exits successfully
+
+### 4. `testMultipleCommandsAreFlushedSeparately`
+- Simulates multiple commands in sequence
+- Confirms each produces its own line in the output buffer
+- Ensures `EXIT_SUCCESS` is included as the last response
+
+### 5. `testClientHandlerExitsCleanlyOnEOF`
+- Simulates end-of-stream (`""` input)
+- Confirms `run()` exits cleanly without exceptions
+- Asserts no commands were handled
 
 ---
 
-## Sample Assertions (JUnit)
+## Test Infrastructure
+
+- **FakeSocket**: Simulates a `Socket` with predefined input and output streams
+- **FakeSocketWithError**: Throws exceptions to simulate I/O failure
+- **FakeCommandHandler**: Captures and records each command string passed for inspection
+
+---
+
+## Sample Assertion (JUnit)
 
 ```java
-assertTrue(registerMatched, "Expected REGISTER command with matching JSON");
-assertTrue(exitMatched, "Expected EXIT command to be processed");
+String simulatedInput = "REGISTER%%{\"email\":\"test@example.com\",\"password\":\"123\"}\nEXIT%%{}\n";
+FakeSocket socket = new FakeSocket(simulatedInput);
+FakeCommandHandler handler = new FakeCommandHandler();
+
+ClientHandler clientHandler = new ClientHandler(socket, handler);
+clientHandler.run();
+
+String response = socket.getCapturedOutput();
 assertTrue(response.contains("EXIT_SUCCESS"));
-```
-
-## Fake Infrastructure
-
-### FakeSocket
-- Simulates input/output streams
-- Provides dummy socket address for logging
-
-### FakeSocketWithError
-- Throws IOException on input stream to simulate client error
-
-### FakeCommandHandler
-- Records all commands handled
-- Responds with command + `_RECEIVED`
-- Sends `EXIT_SUCCESS` when `EXIT` command is received
-
----
-
-## Summary
-
-These tests validate that `ClientHandler`:
-- Correctly reads from the socket
-- Delegates command strings to a handler
-- Handles disconnects and exceptions gracefully
-- Works in a self-contained thread per client
-
-All tests passing confirm correct per-client thread behavior and protocol-level compliance during client interaction.
 

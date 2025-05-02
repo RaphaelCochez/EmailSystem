@@ -70,6 +70,48 @@ class ClientHandlerTest {
         assertDoesNotThrow(clientHandler::run);
     }
 
+    @Test
+    void testMalformedJsonCommandHandledGracefully() {
+        String malformedInput = "LOGIN%%{bad_json}\nEXIT%%{}\n";
+        socket = new FakeSocket(malformedInput);
+        handler = new FakeCommandHandler(handledCommands);
+
+        ClientHandler clientHandler = new ClientHandler(socket, handler);
+
+        assertDoesNotThrow(clientHandler::run);
+
+        assertTrue(handledCommands.stream().anyMatch(cmd -> cmd.startsWith("LOGIN%%{bad_json}")));
+        assertTrue(socket.getCapturedOutput().contains("EXIT_SUCCESS"));
+    }
+
+    @Test
+    void testClientHandlerExitsCleanlyOnEOF() {
+        socket = new FakeSocket(""); // Empty input simulates EOF
+        handler = new FakeCommandHandler(handledCommands);
+
+        ClientHandler clientHandler = new ClientHandler(socket, handler);
+
+        assertDoesNotThrow(clientHandler::run, "ClientHandler should exit cleanly on EOF");
+        assertTrue(handledCommands.isEmpty(), "No commands should be handled on EOF");
+    }
+
+    @Test
+    void testMultipleCommandsAreFlushedSeparately() {
+        String input = "REGISTER%%{\"email\":\"a@b.com\",\"password\":\"pw\"}\n" +
+                "LOGIN%%{\"email\":\"a@b.com\",\"password\":\"pw\"}\n" +
+                "EXIT%%{}\n";
+        socket = new FakeSocket(input);
+        handler = new FakeCommandHandler(handledCommands);
+
+        ClientHandler clientHandler = new ClientHandler(socket, handler);
+        clientHandler.run();
+
+        String[] responses = socket.getCapturedOutput().split("\n");
+
+        assertTrue(responses.length >= 3, "Each command should produce its own response line");
+        assertTrue(responses[responses.length - 1].contains("EXIT_SUCCESS"), "Last response should confirm exit");
+    }
+
     // --- Fakes ---
 
     static class FakeSocket extends Socket {
