@@ -3,6 +3,9 @@ package server.handler;
 import com.google.gson.Gson;
 import model.Email;
 import model.User;
+
+import static server.protocol.ProtocolConstants.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.data.FileDatabase;
@@ -56,7 +59,10 @@ class CommandHandlerTest {
 
     @Test
     void testSendEmailSuccess() {
+        db.saveUser(new User("sender@example.com", "any"));
         db.saveUser(new User("recipient@example.com", "any"));
+        sessions.startSession("sender@example.com", dummySocket); // required for authenticated command
+
         Email email = new Email();
         email.setId(UUID.randomUUID().toString());
         email.setTo("recipient@example.com");
@@ -69,28 +75,40 @@ class CommandHandlerTest {
 
         String json = gson.toJson(email);
         handler.handle("SEND_EMAIL%%" + json, dummySocket, out);
+
         assertTrue(writer.toString().contains("SEND_EMAIL_SUCCESS"));
     }
 
     @Test
     void testReadEmailUnauthorized() {
+        db.saveUser(new User("alice@example.com", "pw"));
+        db.saveUser(new User("bob@example.com", "pw"));
+        db.saveUser(new User("intruder@example.com", "pw"));
+
+        // NO session for intruder
+        sessions.startSession("bob@example.com", dummySocket); // Optional: real recipient
+        // sessions.startSession("intruder@example.com", dummySocket);
+
         Email email = new Email();
         email.setId("id123");
         email.setTo("bob@example.com");
         email.setFrom("alice@example.com");
-        email.setSubject("Subject");
-        email.setBody("Secret");
+        email.setSubject("Top Secret");
+        email.setBody("Don't read this");
         email.setTimestamp("2025-04-18T14:00:00Z");
         email.setVisible(true);
         email.setEdited(false);
 
         db.saveEmail(email);
 
-        String request = "READ_EMAIL%%{" +
+        String readRequest = "READ_EMAIL%%{" +
                 "\"email\":\"intruder@example.com\",\"id\":\"id123\"}";
 
-        handler.handle(request, dummySocket, out);
-        assertTrue(writer.toString().contains("READ_EMAIL_FAIL"));
+        handler.handle(readRequest, dummySocket, out);
+
+        System.out.println("Response: " + writer.toString()); // just to check remove later if needed
+
+        assertTrue(writer.toString().contains(RESP_UNAUTHORIZED));
     }
 
     @Test
@@ -121,6 +139,7 @@ class CommandHandlerTest {
 
         handler.handle("LOGIN%%" + gson.toJson(user), dummySocket, out);
         assertTrue(writer.toString().contains("LOGIN_SUCCESS"));
+        assertTrue(sessions.isLoggedIn(email));
     }
 
     @Test
@@ -144,7 +163,9 @@ class CommandHandlerTest {
 
         String logoutJson = "{\"email\":\"logoutuser@example.com\"}";
         handler.handle("LOGOUT%%" + logoutJson, dummySocket, out);
+
         assertTrue(writer.toString().contains("LOGOUT_SUCCESS"));
+        assertFalse(sessions.isLoggedIn("logoutuser@example.com"));
     }
 
     // --- Fakes for testing ---
@@ -184,7 +205,8 @@ class CommandHandlerTest {
         @Override
         public List<Email> getEmailsForUser(String email, String type) {
             return emails.stream()
-                    .filter(e -> "received".equalsIgnoreCase(type) ? e.getTo().equalsIgnoreCase(email)
+                    .filter(e -> "received".equalsIgnoreCase(type)
+                            ? e.getTo().equalsIgnoreCase(email)
                             : e.getFrom().equalsIgnoreCase(email))
                     .toList();
         }

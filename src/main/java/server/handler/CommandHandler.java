@@ -26,8 +26,7 @@ public class CommandHandler {
     private final SessionManager sessionManager;
     private final Gson gson = new Gson();
 
-    public CommandHandler(AuthService authService, EmailService emailService,
-            SessionManager sessionManager) {
+    public CommandHandler(AuthService authService, EmailService emailService, SessionManager sessionManager) {
         this.authService = authService;
         this.emailService = emailService;
         this.sessionManager = sessionManager;
@@ -48,18 +47,14 @@ public class CommandHandler {
             JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
 
             switch (command) {
-                case CMD_REGISTER:
-                    authService.handleRegister(payload, out);
-                    break;
+                case CMD_REGISTER -> authService.handleRegister(payload, out);
 
-                case CMD_LOGIN:
-                    authService.handleLogin(payload, clientSocket, out);
-                    break;
+                case CMD_LOGIN -> authService.handleLogin(payload, clientSocket, out);
 
-                case CMD_SEND_EMAIL: {
+                case CMD_SEND_EMAIL -> {
                     Email email = gson.fromJson(json, Email.class);
                     if (!sessionManager.isLoggedIn(email.getFrom())) {
-                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        out.println(RESP_UNAUTHORIZED + DELIMITER + "User not logged in");
                         return;
                     }
                     if (emailService.sendEmail(email)) {
@@ -68,10 +63,9 @@ public class CommandHandler {
                         LogHandler.log("SEND_EMAIL failed for user: " + email.getFrom());
                         out.println(RESP_SEND_EMAIL_FAIL + DELIMITER + "Validation or recipient failure");
                     }
-                    break;
                 }
 
-                case CMD_RETRIEVE_EMAILS: {
+                case CMD_RETRIEVE_EMAILS -> {
                     String type = json.has("type") ? json.get("type").getAsString() : null;
                     String userEmail = json.has("email") ? json.get("email").getAsString() : null;
                     if (type == null || userEmail == null) {
@@ -79,17 +73,16 @@ public class CommandHandler {
                         return;
                     }
                     if (!sessionManager.isLoggedIn(userEmail)) {
-                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        out.println(RESP_UNAUTHORIZED + DELIMITER + "User not logged in");
                         return;
                     }
                     List<Email> emails = "received".equalsIgnoreCase(type)
                             ? emailService.getReceivedEmails(userEmail)
                             : emailService.getSentEmails(userEmail);
                     out.println(RESP_RETRIEVE_EMAILS_SUCCESS + DELIMITER + gson.toJson(emails));
-                    break;
                 }
 
-                case CMD_SEARCH_EMAIL: {
+                case CMD_SEARCH_EMAIL -> {
                     String userEmail = json.has("email") ? json.get("email").getAsString() : null;
                     String type = json.has("type") ? json.get("type").getAsString() : null;
                     String keyword = json.has("keyword") ? json.get("keyword").getAsString() : null;
@@ -99,7 +92,7 @@ public class CommandHandler {
                         return;
                     }
                     if (!sessionManager.isLoggedIn(userEmail)) {
-                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        out.println(RESP_UNAUTHORIZED + DELIMITER + "User not logged in");
                         return;
                     }
 
@@ -110,10 +103,9 @@ public class CommandHandler {
                     } else {
                         out.println(RESP_SEARCH_EMAIL_SUCCESS + DELIMITER + gson.toJson(searchResults));
                     }
-                    break;
                 }
 
-                case CMD_READ_EMAIL: {
+                case CMD_READ_EMAIL -> {
                     String reader = json.has("email") ? json.get("email").getAsString() : null;
                     String id = json.has("id") ? json.get("id").getAsString() : null;
 
@@ -122,7 +114,7 @@ public class CommandHandler {
                         return;
                     }
                     if (!sessionManager.isLoggedIn(reader)) {
-                        out.println("UNAUTHORIZED" + DELIMITER + "User not logged in");
+                        out.println(RESP_UNAUTHORIZED + DELIMITER + "User not logged in");
                         return;
                     }
 
@@ -133,10 +125,9 @@ public class CommandHandler {
                         LogHandler.log("READ_EMAIL denied for user " + reader + " on email ID " + id);
                         out.println(RESP_READ_EMAIL_FAIL + DELIMITER + "Email not found or access denied");
                     }
-                    break;
                 }
 
-                case CMD_LOGOUT: {
+                case CMD_LOGOUT -> {
                     String logoutEmail = json.has("email") ? json.get("email").getAsString() : null;
                     if (logoutEmail == null) {
                         out.println(RESP_LOGOUT_FAIL + DELIMITER + "Missing 'email' field");
@@ -145,18 +136,17 @@ public class CommandHandler {
                     sessionManager.endSession(logoutEmail);
                     LogHandler.log("User logged out: " + logoutEmail);
                     out.println(RESP_LOGOUT_SUCCESS);
-                    break;
                 }
 
-                case CMD_EXIT:
+                case CMD_EXIT -> {
                     LogHandler.log("EXIT command received from client: " + clientSocket.getRemoteSocketAddress());
                     out.println(RESP_EXIT_SUCCESS);
-                    break;
+                }
 
-                default:
+                default -> {
                     LogHandler.log("Unknown command received from client: " + command);
                     out.println("UNKNOWN_COMMAND" + DELIMITER + "Command not recognized");
-                    break;
+                }
             }
         } catch (Exception e) {
             LogHandler.log("Command [" + input + "] failed from client " + clientSocket.getRemoteSocketAddress() + ": "

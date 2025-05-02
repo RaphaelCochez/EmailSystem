@@ -1,62 +1,58 @@
 # LogHandler Unit Testing
 
-This document outlines the unit testing strategy for `LogHandler.java` located in `utils/`.
+This document outlines the unit testing strategy for the `LogHandler` utility in the `utils` package.
 
 ---
 
-## Status: Implemented in LogHandlerTest.java
+## Status: ✅ Fully Implemented in LogHandlerTest.java (Java 17+ compatible)
 
 ---
 
 ## Objective
 
-Ensure that the `LogHandler` class:
-- Correctly writes messages to the log file asynchronously
-- Supports terminal output using `logAndPrint()`
-- Properly flushes and shuts down the logging executor
-- Respects a test-specific log path to avoid writing to production logs
+Ensure that `LogHandler`:
+- Asynchronously writes logs to the file defined in `Constants.LOG_FILE_PATH`
+- Prints logs to the terminal when `logAndPrint()` is called
+- Flushes all logs properly during shutdown
+- Supports safe testing without reflection or static overrides
 
 ---
 
 ## Tests Implemented
 
 ### 1. `testLogFileCreation`
-- Verifies the log file exists after setup
-- Ensures the test does not interfere with production logs
+- Verifies that the log file is created during test setup
 
 ### 2. `testSimpleLogEntry`
-- Logs a message using `log()`
-- Waits for async execution to complete
-- Confirms the message appears in the test log file
+- Logs a single message using `log()`
+- Asserts that it is written to the log file after async flush
 
 ### 3. `testLogAndPrintEntry`
-- Calls `logAndPrint()` with a message
-- Asserts the message is written to the file
+- Logs a message using `logAndPrint()`
+- Verifies the file contains the printed message
 
 ### 4. `testMultipleLogEntries`
-- Logs five different messages
-- Confirms all are written correctly after short wait
+- Logs multiple lines
+- Verifies all lines are present in the output file
 
 ### 5. `testShutdownFlushesLogs`
-- Logs a message and calls `shutdown()`
-- Verifies the message was flushed to file before shutdown
+- Logs a message
+- Shuts down the executor
+- Ensures the message is still written to file after shutdown
 
 ---
 
-## Setup Details
+## Design Notes
 
-- Overrides `Constants.LOG_FILE_PATH` using reflection
-- Uses `logs/test-server.log` to isolate test logs
-- Calls `LogHandler.resetExecutorForTests()` in `@BeforeAll`
+- **Executor reset**: `LogHandler.resetExecutorForTests()` is called in `@BeforeAll`
+- **Reflection removed**: Does not override `Constants.LOG_FILE_PATH` using `setFinalStatic(...)`
+- **Safe for Java 17+**: No access to internal `modifiers` field or restricted APIs
 
 ---
 
-## Sample Assertions (JUnit 5)
+## Sample Assertion
 
 ```java
-LogHandler.log("Hello test log!");
+LogHandler.log("Test message");
 TimeUnit.MILLISECONDS.sleep(300);
-List<String> lines = Files.readAllLines(Paths.get("logs/test-server.log"));
-
-assertTrue(lines.stream().anyMatch(line -> line.contains("Hello test log!")));
-```
+assertTrue(Files.readString(Paths.get("logs/server.log")).contains("Test message"));
