@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import model.User;
 import server.data.FileDatabase;
 import server.protocol.ProtocolConstants;
-import utils.SecurityUtills;
+import utils.SecurityUtils;
 
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -29,8 +29,8 @@ public class AuthService {
                 return;
             }
 
-            String salt = SecurityUtills.generateSalt();
-            String hashed = SecurityUtills.hashPassword(request.getPassword(), salt);
+            String salt = SecurityUtils.generateSalt();
+            String hashed = SecurityUtils.hashPassword(request.getPassword(), salt);
             String saltedHash = salt + "$" + hashed;
 
             User securedUser = new User(request.getEmail(), saltedHash);
@@ -71,7 +71,7 @@ public class AuthService {
             String storedHash = parts[1];
             String rawPassword = request.getPassword(); // This is the raw password sent by client
 
-            boolean match = SecurityUtills.verifyPassword(rawPassword, storedHash, salt);
+            boolean match = SecurityUtils.verifyPassword(rawPassword, storedHash, salt);
 
             if (match) {
                 sessionManager.startSession(request.getEmail(), clientSocket);

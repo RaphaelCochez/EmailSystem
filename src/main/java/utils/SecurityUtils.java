@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-public class SecurityUtills {
+public class SecurityUtils {
 
     public static String hashPassword(String password, String salt) {
         try {

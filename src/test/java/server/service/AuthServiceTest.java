@@ -5,7 +5,7 @@ import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.data.FileDatabase;
-import utils.SecurityUtills;
+import utils.SecurityUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -160,8 +160,8 @@ class AuthServiceTest {
 
             String hashedPassword = user.getPassword();
             if (!hashedPassword.contains("$")) {
-                String salt = SecurityUtills.generateSalt();
-                String hash = SecurityUtills.hashPassword(hashedPassword, salt);
+                String salt = SecurityUtils.generateSalt();
+                String hash = SecurityUtils.hashPassword(hashedPassword, salt);
                 hashedPassword = salt + "$" + hash;
             }
 
