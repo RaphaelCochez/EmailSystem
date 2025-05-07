@@ -1,0 +1,6 @@
+{"id":"77966df7-8ca9-46c3-a6ab-b79b17514caf","to":"user2@test.com","from":"user1@test.com","subject":"test","body":"this is a test","timestamp":"2025-05-07 16:16:06","visible":true,"edited":false}
+{"id":"bc8a8427-10ce-4113-b327-e55068435237","to":"user2@test.com","from":"user1@test.com","subject":"test1","body":"this is another test","timestamp":"2025-05-07 16:17:43","visible":true,"edited":false}
+{"id":"dd34f79f-80e7-4d16-9a1e-37557f9c1949","to":"user1@test.com","from":"user1@test.com","subject":"test","body":"another test","timestamp":"2025-05-07 16:18:28","visible":true,"edited":false}
+{"id":"75ccd8b4-cc2e-4afb-9987-a2e39d2ba58e","to":"user1@test.com","from":"user1@test.com","subject":"test","body":"dit is een test","timestamp":"2025-05-07 17:43:38","visible":true,"edited":false}
+{"id":"77eff004-3aed-4465-948d-9efac22a6066","to":"user2@test.com","from":"user1@test.com","subject":"test1","body":"this is a test for a tests test","timestamp":"2025-05-07 18:21:48","visible":true,"edited":false}
+{"id":"f13fc828-d165-48a2-ae96-5d275d5b68b5","to":"user1@test.com","from":"user2@test.com","subject":"dkit","body":"im bored","timestamp":"2025-05-07 23:49:51","visible":true,"edited":false}
