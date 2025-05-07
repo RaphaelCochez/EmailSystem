@@ -36,13 +36,15 @@ public class AuthService {
 
             User securedUser = new User(request.getEmail(), saltedHash);
 
-            if (database.saveUser(securedUser)) {
-                out.println(ProtocolConstants.RESP_REGISTER_SUCCESS);
-                LogHandler.log("User registered: " + request.getEmail());
-            } else {
+            if (database.userExists(request.getEmail())) {
                 out.println(ProtocolConstants.RESP_REGISTER_FAIL + "%%Email already registered");
                 LogHandler.log("Registration failed: Email already registered - " + request.getEmail());
+                return;
             }
+
+            database.saveUser(securedUser);
+            out.println(ProtocolConstants.RESP_REGISTER_SUCCESS);
+            LogHandler.log("User registered: " + request.getEmail());
 
         } catch (Exception e) {
             out.println(ProtocolConstants.RESP_REGISTER_FAIL + "%%Invalid JSON or internal error");

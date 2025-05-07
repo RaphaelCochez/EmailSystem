@@ -1,6 +1,8 @@
 package client;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,4 +69,11 @@ public class CommandFormatter {
         payload.put("id", id);
         return format("READ_EMAIL", payload);
     }
+
+    public static String exit(String email) {
+        JsonObject json = new JsonObject();
+        json.addProperty("email", email);
+        return "EXIT%%" + json;
+    }
+
 }

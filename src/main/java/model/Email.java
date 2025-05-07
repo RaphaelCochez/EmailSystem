@@ -99,4 +99,13 @@ public class Email {
     public void setEdited(boolean edited) {
         this.edited = edited;
     }
+
+    public String getSender() {
+        return from;
+    }
+
+    public String getRecipient() {
+        return to;
+    }
+
 }

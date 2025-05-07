@@ -76,7 +76,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         List<Email> received = emailService.getReceivedEmails("alice@example.com");
         assertEquals(1, received.size());
@@ -97,7 +97,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         List<Email> sent = emailService.getSentEmails("alice@example.com");
         assertEquals(1, sent.size());
@@ -118,7 +118,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         List<Email> result = emailService.searchEmails("alice@example.com", "received", "project");
         assertEquals(1, result.size());
@@ -139,7 +139,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         List<Email> result = emailService.searchEmails("alice@example.com", "sent", "bob");
         assertEquals(1, result.size());
@@ -160,7 +160,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         Email retrieved = emailService.getEmailById("alice@example.com", "abc123");
         assertNotNull(retrieved);
@@ -181,7 +181,7 @@ class EmailServiceTest {
         email.setVisible(true);
         email.setEdited(false);
 
-        fileDatabase.saveEmail(email);
+        fileDatabase.addEmail(email);
 
         Email result = emailService.getEmailById("alice@example.com", "blocked123");
         assertNull(result);

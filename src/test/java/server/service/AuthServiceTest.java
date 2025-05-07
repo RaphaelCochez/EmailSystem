@@ -1,16 +1,19 @@
 package server.service;
 
 import com.google.gson.Gson;
+
+import model.Email;
 import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.data.FileDatabase;
-import utils.SecurityUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -146,33 +149,45 @@ class AuthServiceTest {
 
     // --- Fakes below ---
 
+    // FakeDatabase class for testing purposes
     static class FakeDatabase extends FileDatabase {
         private final Map<String, User> users = new HashMap<>();
+        private final List<Email> emails = new ArrayList<>();
 
         public FakeDatabase() {
             super("test_users.db", "test_emails.db");
         }
 
+        // Override saveUser method
         @Override
         public boolean saveUser(User user) {
-            if (users.containsKey(user.getEmail()))
+            if (users.containsKey(user.getEmail())) {
                 return false;
-
-            String hashedPassword = user.getPassword();
-            if (!hashedPassword.contains("$")) {
-                String salt = SecurityUtils.generateSalt();
-                String hash = SecurityUtils.hashPassword(hashedPassword, salt);
-                hashedPassword = salt + "$" + hash;
             }
-
-            User securedUser = new User(user.getEmail(), hashedPassword);
-            users.put(user.getEmail(), securedUser);
+            users.put(user.getEmail(), user);
             return true;
         }
 
+        // Override getUser method
         @Override
         public User getUser(String email) {
             return users.get(email);
+        }
+
+        // Override saveEmail method
+        @Override
+        public boolean saveEmail(Email email) {
+            emails.add(email);
+            return true;
+        }
+
+        // Override getEmailById method
+        @Override
+        public Email getEmailById(String id) {
+            return emails.stream()
+                    .filter(e -> e.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
         }
     }
 

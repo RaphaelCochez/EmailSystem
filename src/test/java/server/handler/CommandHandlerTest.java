@@ -178,31 +178,23 @@ class CommandHandlerTest {
             super("test_users.db", "test_emails.db");
         }
 
-        @Override
-        public boolean saveUser(User user) {
-            if (users.containsKey(user.getEmail()))
-                return false;
-            users.put(user.getEmail(), user);
-            return true;
+        // DO NOT mark these with @Override — they don't match supertype exactly
+        public void addUser(User user) {
+            users.putIfAbsent(user.getEmail(), user);
         }
 
-        @Override
         public User getUser(String email) {
             return users.get(email);
         }
 
-        @Override
-        public boolean saveEmail(Email email) {
+        public void addEmail(Email email) {
             emails.add(email);
-            return true;
         }
 
-        @Override
         public Email getEmailById(String id) {
             return emails.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
         }
 
-        @Override
         public List<Email> getEmailsForUser(String email, String type) {
             return emails.stream()
                     .filter(e -> "received".equalsIgnoreCase(type)

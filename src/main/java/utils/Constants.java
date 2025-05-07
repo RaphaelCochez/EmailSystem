@@ -8,7 +8,7 @@ public class Constants {
         public static final int SALT_LENGTH = 16; // bytes
 
         // === Server Configuration ===
-        public static final int SERVER_PORT = 8080;
+        public static final int SERVER_PORT = 18080;
         public static final int MAX_CLIENTS = 50;
 
         // === File Paths ===

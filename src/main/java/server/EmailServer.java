@@ -37,6 +37,15 @@ public class EmailServer {
         AuthService authService = new AuthService(database, sessionManager);
         CommandHandler commandHandler = new CommandHandler(authService, emailService, sessionManager);
 
+        // Register shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LogHandler.log("Shutdown hook triggered: Saving state...");
+            sessionManager.clearAllSessions();
+            database.saveAll();
+            LogHandler.shutdown();
+            LogHandler.log("Shutdown hook completed. Goodbye.");
+        }));
+
         // Create thread pool
         ExecutorService threadPool = Executors.newFixedThreadPool(MAX_CLIENTS);
 
@@ -51,14 +60,7 @@ public class EmailServer {
         } catch (IOException e) {
             LogHandler.log("Fatal server error: " + e.getMessage());
         } finally {
-            LogHandler.log("Initiating shutdown sequence...");
-
-            threadPool.shutdownNow();
-            sessionManager.clearAllSessions();
-            database.saveAll();
-            LogHandler.shutdown();
-
-            LogHandler.log("Server shutdown complete.");
+            LogHandler.log("Main thread exiting. Triggering shutdown...");
         }
     }
 }

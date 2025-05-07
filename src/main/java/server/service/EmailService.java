@@ -10,10 +10,6 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * EmailService handles all email-related operations including
- * sending, retrieving, searching, and reading emails.
- */
 public class EmailService {
 
     private final FileDatabase fileDatabase;
@@ -22,12 +18,6 @@ public class EmailService {
         this.fileDatabase = fileDatabase;
     }
 
-    /**
-     * Sends an email if recipient exists and all required fields are valid.
-     *
-     * @param email the Email object to send
-     * @return true if sent successfully, false otherwise
-     */
     public boolean sendEmail(Email email) {
         if (email == null ||
                 email.getTo() == null ||
@@ -48,43 +38,30 @@ public class EmailService {
             email.setId(UUID.randomUUID().toString());
         }
 
-        boolean success = fileDatabase.saveEmail(email);
-        if (success) {
-            LogHandler.log(
-                    "Email sent from " + email.getFrom() + " to " + email.getTo() + " [ID: " + email.getId() + "]");
-        } else {
-            LogHandler.log("Failed to save email to file database.");
-        }
-
-        return success;
+        fileDatabase.addEmail(email); // renamed from saveEmail to match FileDatabase
+        LogHandler.log("Email sent from " + email.getFrom() + " to " + email.getTo() + " [ID: " + email.getId() + "]");
+        return true;
     }
 
-    /**
-     * Retrieves emails received by a user.
-     */
     public List<Email> getReceivedEmails(String userEmail) {
         String normalized = userEmail.toLowerCase(Locale.ROOT);
-        return fileDatabase.getEmailsForUser(normalized, "received");
+        return fileDatabase.getEmailsForUser(normalized, false); // false = inbox
     }
 
-    /**
-     * Retrieves emails sent by a user.
-     */
     public List<Email> getSentEmails(String userEmail) {
         String normalized = userEmail.toLowerCase(Locale.ROOT);
-        return fileDatabase.getEmailsForUser(normalized, "sent");
+        return fileDatabase.getEmailsForUser(normalized, true); // true = sent
     }
 
-    /**
-     * Searches either received or sent emails by keyword.
-     */
     public List<Email> searchEmails(String userEmail, String type, String keyword) {
         if (keyword == null || keyword.isBlank()) {
             LogHandler.log("Email search aborted: Empty keyword.");
             return new ArrayList<>();
         }
 
-        List<Email> base = fileDatabase.getEmailsForUser(userEmail.toLowerCase(Locale.ROOT), type);
+        boolean isSent = "sent".equalsIgnoreCase(type);
+        List<Email> base = fileDatabase.getEmailsForUser(userEmail.toLowerCase(Locale.ROOT), isSent);
+
         if (base == null) {
             LogHandler.log("Email search failed: Invalid user or email type - " + userEmail + " / " + type);
             return new ArrayList<>();
@@ -93,16 +70,11 @@ public class EmailService {
         final String keywordLower = keyword.toLowerCase(Locale.ROOT);
         return base.stream()
                 .filter(email -> email.getSubject().toLowerCase(Locale.ROOT).contains(keywordLower)
-                        || ("received".equalsIgnoreCase(type)
-                                && email.getFrom().toLowerCase(Locale.ROOT).contains(keywordLower))
-                        || ("sent".equalsIgnoreCase(type)
-                                && email.getTo().toLowerCase(Locale.ROOT).contains(keywordLower)))
+                        || (!isSent && email.getFrom().toLowerCase(Locale.ROOT).contains(keywordLower))
+                        || (isSent && email.getTo().toLowerCase(Locale.ROOT).contains(keywordLower)))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Returns a specific email by ID if it belongs to the requesting user.
-     */
     public Email getEmailById(String userEmail, String id) {
         Email email = fileDatabase.getEmailById(id);
         if (email == null) {
@@ -115,6 +87,6 @@ public class EmailService {
         }
 
         LogHandler.log("Email read blocked: Access denied to user " + userEmail + " for email ID " + id);
-        return null; // Access denied
+        return null;
     }
 }

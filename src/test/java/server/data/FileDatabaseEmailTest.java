@@ -54,11 +54,10 @@ class FileDatabaseEmailTest {
         email.setEdited(false);
 
         // Save to memory
-        boolean saved = fileDatabase.saveEmail(email);
-        assertTrue(saved, "Email should be saved successfully");
+        fileDatabase.addEmail(email); // <-- was saveEmail(email)
 
         // Load from memory
-        List<Email> inMemory = fileDatabase.getEmailsForUser("recipient@example.com", "received");
+        List<Email> inMemory = fileDatabase.getEmailsForUser("recipient@example.com", false); // false = received
         assertEquals(1, inMemory.size(), "One email should be retrieved for recipient (memory)");
 
         Email loaded = inMemory.get(0);
@@ -71,7 +70,7 @@ class FileDatabaseEmailTest {
         FileDatabase reloadedDb = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
         reloadedDb.loadAll();
 
-        List<Email> reloaded = reloadedDb.getEmailsForUser("recipient@example.com", "received");
+        List<Email> reloaded = reloadedDb.getEmailsForUser("recipient@example.com", false); // false = received
         assertEquals(1, reloaded.size(), "Reloaded DB should retrieve the email from disk");
 
         Email reloadedEmail = reloaded.get(0);

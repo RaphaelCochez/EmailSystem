@@ -139,7 +139,16 @@ public class CommandHandler {
                 }
 
                 case CMD_EXIT -> {
-                    LogHandler.log("EXIT command received from client: " + clientSocket.getRemoteSocketAddress());
+                    String exitEmail = json.has("email") ? json.get("email").getAsString() : null;
+
+                    if (exitEmail != null && sessionManager.isLoggedIn(exitEmail)) {
+                        sessionManager.endSession(exitEmail);
+                        LogHandler.log("Session ended on EXIT for user: " + exitEmail);
+                    } else {
+                        LogHandler.log(
+                                "EXIT received from unauthenticated client: " + clientSocket.getRemoteSocketAddress());
+                    }
+
                     out.println(RESP_EXIT_SUCCESS);
                 }
 
