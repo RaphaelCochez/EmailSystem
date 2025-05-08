@@ -26,6 +26,7 @@ public class EmailClientCLI {
     private final Scanner scanner = new Scanner(System.in);
     private List<Email> receivedEmails = new ArrayList<>();
     private final Gson gson = new Gson();
+    private volatile String loginFailReason = null;
 
     public static void main(String[] args) {
         new EmailClientCLI().start();
@@ -85,11 +86,16 @@ public class EmailClientCLI {
             }
 
             case "LOGIN_FAIL" -> {
-                sessionEmail = null;
-                ConsolePrinter.error(CLIPrompts.LOGIN_FAILURE);
+                String[] parts = response.split("%%");
+                loginFailReason = parts.length > 1 ? parts[1] : "Unknown error";
+                ConsolePrinter.error("Login failed: " + loginFailReason);
             }
+
             case "REGISTER_SUCCESS" -> ConsolePrinter.success(CLIPrompts.REGISTER_SUCCESS);
-            case "REGISTER_FAIL" -> ConsolePrinter.error(CLIPrompts.REGISTER_FAILURE);
+            case "REGISTER_FAIL" -> {
+                ConsolePrinter.error(CLIPrompts.REGISTER_FAILURE);
+                loggedIn = false;
+            }
             case "SEND_EMAIL_SUCCESS" -> {
                 ConsolePrinter.success("Email sent successfully!");
             }
@@ -152,29 +158,75 @@ public class EmailClientCLI {
     }
 
     private void registerUser() {
-        ConsolePrinter.prompt(CLIPrompts.ENTER_EMAIL);
-        String email = scanner.nextLine().trim();
-        ConsolePrinter.prompt(CLIPrompts.ENTER_PASSWORD);
-        String password = scanner.nextLine().trim();
+        String email;
+        String password;
+
+        while (true) {
+            ConsolePrinter.prompt(CLIPrompts.ENTER_EMAIL);
+            email = scanner.nextLine().trim();
+
+            if (email.isEmpty()) {
+                ConsolePrinter.error("Email cannot be empty.");
+                continue;
+            }
+
+            // Simple email regex pattern
+            if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+                ConsolePrinter.error("Invalid email format. Please use a valid address (e.g. user@example.com).");
+                continue;
+            }
+
+            break;
+        }
+
+        while (true) {
+            ConsolePrinter.prompt(CLIPrompts.ENTER_PASSWORD);
+            password = scanner.nextLine().trim();
+
+            if (password.isEmpty()) {
+                ConsolePrinter.error("Password cannot be empty.");
+                continue;
+            }
+
+            break;
+        }
+
         out.println(CommandFormatter.register(email, password));
     }
 
     private void loginUser() {
         ConsolePrinter.prompt(CLIPrompts.ENTER_EMAIL);
         sessionEmail = scanner.nextLine().trim();
+
         ConsolePrinter.prompt(CLIPrompts.ENTER_PASSWORD);
         String password = scanner.nextLine().trim();
+
+        loginFailReason = null; // reset before new attempt
         out.println(CommandFormatter.login(sessionEmail, password));
 
-        // Wait for login response to be processed by listener
-        while (!loggedIn) {
+        while (!loggedIn && loginFailReason == null) {
             try {
-                Thread.sleep(100); // wait until listener sets loggedIn
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                return;
             }
         }
+
+        if (loggedIn)
+            return;
+
+        if (loginFailReason != null && loginFailReason.equalsIgnoreCase("User not found")) {
+            ConsolePrinter.prompt("User not found. Would you like to register instead? (y/n): ");
+            String choice = scanner.nextLine().trim().toLowerCase();
+            if (choice.equals("y")) {
+                registerUser();
+            }
+        }
+
+        // return to main menu
+        sessionEmail = null;
+        loginFailReason = null;
     }
 
     private void mainInteractionLoop() {
