@@ -39,7 +39,6 @@ Thumbs.db
 
 # === Logs & Reports ===
 logs/
-*.log
 *.dump
 *.dumpstream
 *.hprof
