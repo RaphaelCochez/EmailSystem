@@ -37,12 +37,6 @@ build/
 .DS_Store
 Thumbs.db
 
-# === Logs & Reports ===
-logs/
-*.dump
-*.dumpstream
-*.hprof
-*.out
 
 # === Test reports ===
 surefire-reports/
