@@ -29,16 +29,17 @@ class FileDatabaseUserTest {
         }
 
         fileDatabase = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
-        fileDatabase.loadAll(); // Load initial state (if any)
+        fileDatabase.loadAll();
     }
 
     @Test
     void testSaveAndRetrieveUser() {
         User user = new User("test@example.com", "hashedpassword123");
 
-        fileDatabase.saveUser(user); // no longer checks return
-        User loaded = fileDatabase.getUser("test@example.com");
+        boolean saved = fileDatabase.saveUser(user);
+        assertTrue(saved, "User should be saved successfully");
 
+        User loaded = fileDatabase.getUser("test@example.com");
         assertNotNull(loaded, "User should be found");
         assertEquals("test@example.com", loaded.getEmail());
         assertEquals("hashedpassword123", loaded.getPassword());
@@ -48,19 +49,24 @@ class FileDatabaseUserTest {
     void testDuplicateUserIsNotSaved() {
         User user = new User("test@example.com", "hash");
 
-        fileDatabase.saveUser(user);
-        fileDatabase.saveUser(user); // this will overwrite, test for overwrite behavior manually
+        boolean firstSave = fileDatabase.saveUser(user);
+        boolean secondSave = fileDatabase.saveUser(user); // expected to be rejected
+
+        assertTrue(firstSave, "First save should succeed");
+        assertFalse(secondSave, "Second save should be rejected due to duplicate email");
 
         User loaded = fileDatabase.getUser("test@example.com");
         assertNotNull(loaded, "User should still exist");
-        assertEquals("hash", loaded.getPassword(), "Password should remain consistent after re-save");
+        assertEquals("hash", loaded.getPassword(), "Original password should remain unchanged");
     }
 
     @Test
     void testSaveUserAndReloadFromDisk() {
         User user = new User("reload@example.com", "salt$hash");
 
-        fileDatabase.saveUser(user);
+        boolean saved = fileDatabase.saveUser(user);
+        assertTrue(saved, "User should be saved before disk write");
+
         fileDatabase.saveAll(); // flush to disk
 
         FileDatabase reloadedDb = new FileDatabase(TEMP_USERS_DB.toString(), TEMP_EMAILS_DB.toString());
@@ -70,6 +76,16 @@ class FileDatabaseUserTest {
         assertNotNull(loaded, "User should be found after reload");
         assertEquals("reload@example.com", loaded.getEmail());
         assertEquals("salt$hash", loaded.getPassword());
+    }
+
+    @Test
+    void testUserCountReflectsSavedUsers() {
+        assertEquals(0, fileDatabase.getUserCount(), "Initial user count should be 0");
+
+        fileDatabase.saveUser(new User("a@b.com", "hash1"));
+        fileDatabase.saveUser(new User("b@c.com", "hash2"));
+
+        assertEquals(2, fileDatabase.getUserCount(), "User count should reflect successful saves");
     }
 
     @AfterEach

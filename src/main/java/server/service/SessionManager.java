@@ -1,76 +1,77 @@
 package server.service;
 
+import lombok.extern.slf4j.Slf4j;
+import utils.LogHandler;
+
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import utils.LogHandler;
-
 /**
- * SessionManager keeps track of active user sessions,
- * mapping email addresses to open client sockets.
+ * Manages active user sessions for authenticated clients.
+ * Maintains a thread-safe map of email → socket.
+ * Supports session start, termination, lookup, and reverse socket lookup.
  */
+@Slf4j
 public class SessionManager {
 
-    private final Map<String, Socket> activeSessions = new ConcurrentHashMap<>();
+    private final Map<String, Socket> sessionMap = new ConcurrentHashMap<>();
 
     /**
-     * Starts a session for a given user email.
+     * Starts a new session for a user.
      *
-     * @param email  the user's email address
-     * @param socket the socket representing the session
+     * @param email  User's email
+     * @param socket Associated client socket
      */
     public void startSession(String email, Socket socket) {
-        String normalized = email.toLowerCase();
-        activeSessions.put(normalized, socket);
-        LogHandler.log("Session started for user: " + normalized);
+        sessionMap.put(email, socket);
+        log.info("Session started for: {}", email);
+        LogHandler.info("Session started for: " + email);
     }
 
     /**
-     * Ends the session for a given user email.
+     * Ends the session for the given user.
      *
-     * @param email the user's email address
+     * @param email User's email
      */
     public void endSession(String email) {
-        String normalized = email.toLowerCase();
-        activeSessions.remove(normalized);
-        LogHandler.log("Session ended for user: " + normalized);
+        sessionMap.remove(email);
+        log.info("Session ended for: {}", email);
+        LogHandler.info("Session ended for: " + email);
     }
 
     /**
-     * Checks if a user is currently logged in.
-     *
-     * @param email the user's email
-     * @return true if logged in
+     * Checks if a session exists for the given user.
      */
     public boolean isLoggedIn(String email) {
-        return activeSessions.containsKey(email.toLowerCase());
+        return sessionMap.containsKey(email);
     }
 
     /**
-     * Gets the socket associated with a user session.
-     *
-     * @param email the user's email
-     * @return the socket, or null if no session
+     * Gets the socket associated with a logged-in user.
      */
     public Socket getSessionSocket(String email) {
-        return activeSessions.get(email.toLowerCase());
+        return sessionMap.get(email);
     }
 
     /**
-     * Clears all active sessions (useful during server shutdown).
+     * Finds the user email associated with a socket.
+     * Used during forced cleanup (e.g., disconnect).
+     */
+    public String getEmailForSocket(Socket socket) {
+        return sessionMap.entrySet().stream()
+                .filter(entry -> entry.getValue().equals(socket))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Clears all active sessions (e.g., during shutdown).
      */
     public void clearAllSessions() {
-        LogHandler.log("Clearing all sessions...");
-        activeSessions.clear();
-    }
-
-    /**
-     * Optional: Returns a list of active user emails.
-     */
-    public List<String> getActiveUsers() {
-        return new ArrayList<>(activeSessions.keySet());
+        sessionMap.clear();
+        log.info("All sessions cleared");
+        LogHandler.info("All sessions cleared");
     }
 }

@@ -4,55 +4,56 @@ This document outlines the unit testing strategy for the `LogHandler` utility in
 
 ---
 
-## Status: ✅ Fully Implemented in LogHandlerTest.java (Java 17+ compatible)
+## Status: Fully Implemented in `LogHandlerTest.java` (Java 17+ compatible)
 
 ---
 
 ## Objective
 
 Ensure that `LogHandler`:
-- Asynchronously writes logs to the file defined in `Constants.LOG_FILE_PATH`
-- Prints logs to the terminal when `logAndPrint()` is called
-- Flushes all logs properly during shutdown
-- Supports safe testing without reflection or static overrides
+
+- Asynchronously writes logs to the file defined in `ServerConstants.LOG_FILE_PATH`
+- Captures `INFO`, `WARN`, and `ERROR` level logs
+- Flushes log messages correctly before and after shutdown
+- Allows test-safe executor resets via `resetExecutorForTests()`
+- Avoids use of reflection, static overrides, or unsafe modifications
 
 ---
 
 ## Tests Implemented
 
-### 1. `testLogFileCreation`
-- Verifies that the log file is created during test setup
+### 1. `testInfoLogIsWrittenToFile`
+- Logs a message with `LogHandler.info(...)`
+- Asserts the line is written with the `INFO` level to `server.log`
 
-### 2. `testSimpleLogEntry`
-- Logs a single message using `log()`
-- Asserts that it is written to the log file after async flush
+### 2. `testWarnLogIsWrittenToFile`
+- Logs a message with `LogHandler.warn(...)`
+- Confirms presence in the log file with `WARN` level
 
-### 3. `testLogAndPrintEntry`
-- Logs a message using `logAndPrint()`
-- Verifies the file contains the printed message
+### 3. `testErrorLogIsWrittenToFile`
+- Logs a message with `LogHandler.error(...)`
+- Verifies that the log file contains the correct `ERROR` entry
 
-### 4. `testMultipleLogEntries`
-- Logs multiple lines
-- Verifies all lines are present in the output file
-
-### 5. `testShutdownFlushesLogs`
-- Logs a message
-- Shuts down the executor
-- Ensures the message is still written to file after shutdown
+### 4. `testLogHandlerShutdownIsNonBlocking`
+- Verifies that `LogHandler.shutdown()` executes without exception
+- Confirms graceful termination of the executor service
 
 ---
 
 ## Design Notes
 
-- **Executor reset**: `LogHandler.resetExecutorForTests()` is called in `@BeforeAll`
-- **Reflection removed**: Does not override `Constants.LOG_FILE_PATH` using `setFinalStatic(...)`
-- **Safe for Java 17+**: No access to internal `modifiers` field or restricted APIs
+- **Async flush handling**: Tests include a `Thread.sleep()` to allow asynchronous log writing to complete
+- **Executor reset**: `LogHandler.resetExecutorForTests()` is used in `@BeforeEach` to isolate test environments
+- **File isolation**: Log file is cleaned up after each test to ensure consistency
+- **No reflection used**: Tests do not manipulate static final fields or constants
+- **Safe for Java 17+**: All APIs used are compatible with current platform restrictions
 
 ---
 
 ## Sample Assertion
 
 ```java
-LogHandler.log("Test message");
-TimeUnit.MILLISECONDS.sleep(300);
-assertTrue(Files.readString(Paths.get("logs/server.log")).contains("Test message"));
+LogHandler.info("Test message");
+Thread.sleep(200); // allow async flush
+List<String> lines = Files.readAllLines(Path.of("logs", "server.log"));
+assertTrue(lines.stream().anyMatch(line -> line.contains("Test message")));

@@ -2,6 +2,8 @@ package client;
 
 import org.junit.jupiter.api.Test;
 
+import utils.CommandFormatter;
+
 import java.util.HashMap;
 import java.util.Map;
 

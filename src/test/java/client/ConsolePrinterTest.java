@@ -1,6 +1,9 @@
 package client;
 
 import org.junit.jupiter.api.*;
+
+import utils.ConsolePrinter;
+
 import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;

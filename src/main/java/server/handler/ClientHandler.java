@@ -1,7 +1,7 @@
 package server.handler;
 
+import lombok.extern.slf4j.Slf4j;
 import utils.LogHandler;
-import utils.Constants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,49 +10,53 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Handles communication with a single client over a socket connection.
- * Thread-safe by design: each handler runs in its own thread with isolated
- * socket I/O.
- *
- * @ThreadSafe
+ * Handles communication with a single client in a dedicated thread.
+ * Reads input from the client, logs all interactions (safely),
+ * and delegates request handling to the CommandHandler.
  */
+@Slf4j
 public class ClientHandler implements Runnable {
 
-    private final Socket socket;
+    private final Socket clientSocket;
     private final CommandHandler commandHandler;
 
-    public ClientHandler(Socket socket, CommandHandler commandHandler) {
-        this.socket = socket;
+    public ClientHandler(Socket clientSocket, CommandHandler commandHandler) {
+        this.clientSocket = clientSocket;
         this.commandHandler = commandHandler;
     }
 
     @Override
     public void run() {
-        String clientInfo = socket.getRemoteSocketAddress().toString();
-        LogHandler.log("Client connected: " + clientInfo);
+        String clientAddress = clientSocket.getRemoteSocketAddress().toString();
+        log.info("New client connected: {}", clientAddress);
+        LogHandler.info("New client connected: " + clientAddress);
 
         try (
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            String inputLine;
 
-            String input;
-            while ((input = in.readLine()) != null) {
-                if (Constants.DEBUG_MODE) {
-                    LogHandler.log("Received command from " + clientInfo + ": " + input);
-                }
-                commandHandler.handle(input, socket, out);
+            while ((inputLine = in.readLine()) != null) {
+                String command = inputLine.contains("%%") ? inputLine.split("%%")[0] : "MALFORMED";
+                log.debug("Received {} command from {}", command, clientAddress);
+                LogHandler.info("Received " + command + " command from " + clientAddress);
+
+                commandHandler.handle(inputLine, clientSocket, out);
             }
 
         } catch (IOException e) {
-            LogHandler.log("Connection error with client " + clientInfo + ": " + e.getMessage());
+            log.error("Connection error with {}: {}", clientAddress, e.getMessage());
+            LogHandler.error("Connection error with " + clientAddress + ": " + e.getMessage());
 
         } finally {
             try {
-                socket.close();
+                clientSocket.close();
+                log.info("Connection closed: {}", clientAddress);
+                LogHandler.info("Connection closed: " + clientAddress);
             } catch (IOException e) {
-                LogHandler.log("Failed to close socket for client " + clientInfo + ": " + e.getMessage());
+                log.error("Error closing connection with {}: {}", clientAddress, e.getMessage());
+                LogHandler.error("Error closing connection with " + clientAddress + ": " + e.getMessage());
             }
-            LogHandler.log("Client disconnected: " + clientInfo);
         }
     }
 }

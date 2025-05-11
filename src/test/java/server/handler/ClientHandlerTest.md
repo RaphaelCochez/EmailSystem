@@ -1,71 +1,75 @@
-# ClientHandler Test Plan
+# ClientHandler Testing
 
-This document outlines the unit testing strategy for `ClientHandler.java` in the `server/handler` package.
-
----
-
-## Status: Fully Implemented in ClientHandlerTest.java
+This document outlines the unit testing strategy for the `ClientHandler` class in `server/handler/ClientHandler.java`.
 
 ---
 
 ## Objective
 
 Ensure that the `ClientHandler` class:
-- Reads commands from a client socket
-- Delegates each command to the `CommandHandler`
-- Handles multi-line protocol commands correctly
-- Writes responses to the socket output stream
-- Handles I/O exceptions and malformed input gracefully
-- Terminates cleanly on end-of-input (EOF)
+
+* Reads and processes client input correctly via `BufferedReader`
+* Passes valid commands to the provided `CommandHandler`
+* Flushes outputs appropriately via `PrintWriter`
+* Logs connection lifecycle and command execution
+* Gracefully handles input/output errors and malformed data
+* Properly closes client socket and logs disconnections
 
 ---
 
 ## Tests Implemented
 
 ### 1. `testClientHandlerProcessesValidCommands`
-- Simulates multiple valid commands (e.g., `REGISTER`, `EXIT`)
-- Asserts each command is delegated to `CommandHandler`
-- Confirms `EXIT_SUCCESS` is printed to output
+
+* Simulates input of a REGISTER and EXIT command
+* Confirms both commands are parsed and forwarded
+* Checks response includes `EXIT_SUCCESS`
 
 ### 2. `testClientHandlerHandlesIOException`
-- Uses a fake socket that throws an `IOException` on input
-- Asserts that `run()` does not throw and fails gracefully
+
+* Uses a fake socket that throws IOException on `getInputStream()`
+* Asserts that the `ClientHandler` does not crash or throw
 
 ### 3. `testMalformedJsonCommandHandledGracefully`
-- Simulates a malformed JSON payload in a command
-- Asserts that `ClientHandler` still calls `CommandHandler`
-- Verifies the session exits successfully
 
-### 4. `testMultipleCommandsAreFlushedSeparately`
-- Simulates multiple commands in sequence
-- Confirms each produces its own line in the output buffer
-- Ensures `EXIT_SUCCESS` is included as the last response
+* Sends a malformed LOGIN command
+* Confirms handler still processes the following EXIT command
 
-### 5. `testClientHandlerExitsCleanlyOnEOF`
-- Simulates end-of-stream (`""` input)
-- Confirms `run()` exits cleanly without exceptions
-- Asserts no commands were handled
+### 4. `testClientHandlerExitsCleanlyOnEOF`
 
----
+* Provides empty input to simulate end-of-stream
+* Confirms no commands are handled
 
-## Test Infrastructure
+### 5. `testMultipleCommandsAreFlushedSeparately`
 
-- **FakeSocket**: Simulates a `Socket` with predefined input and output streams
-- **FakeSocketWithError**: Throws exceptions to simulate I/O failure
-- **FakeCommandHandler**: Captures and records each command string passed for inspection
+* Sends multiple commands including REGISTER, LOGIN, and EXIT
+* Validates that each command triggers a separate response line
 
 ---
 
-## Sample Assertion (JUnit)
+## Sample Assertions (JUnit)
 
 ```java
-String simulatedInput = "REGISTER%%{\"email\":\"test@example.com\",\"password\":\"123\"}\nEXIT%%{}\n";
-FakeSocket socket = new FakeSocket(simulatedInput);
-FakeCommandHandler handler = new FakeCommandHandler();
+assertTrue(handledCommands.stream().anyMatch(cmd -> cmd.startsWith("REGISTER")));
+assertTrue(socket.getCapturedOutput().contains("EXIT_SUCCESS"));
+assertTrue(handledCommands.isEmpty());
+assertDoesNotThrow(clientHandler::run);
+```
 
-ClientHandler clientHandler = new ClientHandler(socket, handler);
-clientHandler.run();
+---
 
-String response = socket.getCapturedOutput();
-assertTrue(response.contains("EXIT_SUCCESS"));
+## Design Notes
+
+* Uses `FakeSocket` with preloaded input and captured output
+* `FakeCommandHandler` stores and echoes commands
+* Logging output is not asserted but confirmed manually in console for development
+
+---
+
+## Summary
+
+The `ClientHandlerTest.java` verifies that client-side protocol commands are read, validated, dispatched, and responded to as expected. It confirms connection stability and robustness under both valid and faulty conditions.
+
+This completes validation of all runtime behaviors required by the handler thread pattern.
+
 

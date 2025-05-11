@@ -1,20 +1,18 @@
 package server.service;
 
 import com.google.gson.Gson;
-
 import model.Email;
 import model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.data.FileDatabase;
+import utils.ProtocolConstants;
+import utils.SecurityUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,20 +46,23 @@ class AuthServiceTest {
         authService.handleRegister(gson.toJson(newUser), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertEquals("REGISTER_SUCCESS", output);
+        assertEquals(ProtocolConstants.RESPONSE_REGISTER_SUCCESS, output);
         assertNotNull(fakeDatabase.getUser(EMAIL));
     }
 
     @Test
     void testHandleRegisterDuplicateUser() {
-        User existing = new User(EMAIL, "existing$hash");
-        fakeDatabase.saveUser(existing);
+        // Pre-hash manually to simulate stored user
+        String salt = SecurityUtils.generateSalt();
+        String hashed = SecurityUtils.hashPassword(PASSWORD, salt);
+        fakeDatabase.saveUser(new User(EMAIL, salt + "$" + hashed));
 
         User newUser = new User(EMAIL, PASSWORD);
         authService.handleRegister(gson.toJson(newUser), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertTrue(output.startsWith("REGISTER_FAIL"));
+        assertTrue(output.startsWith(ProtocolConstants.RESPONSE_REGISTER_FAIL));
+        assertTrue(output.contains("Email already registered"));
     }
 
     @Test
@@ -70,7 +71,7 @@ class AuthServiceTest {
         authService.handleRegister(payload, printWriter);
 
         String output = responseWriter.toString().trim();
-        assertTrue(output.startsWith("REGISTER_FAIL"));
+        assertTrue(output.startsWith(ProtocolConstants.RESPONSE_REGISTER_FAIL));
         assertTrue(output.contains("Missing required"));
     }
 
@@ -79,38 +80,41 @@ class AuthServiceTest {
         authService.handleRegister("not_json", printWriter);
 
         String output = responseWriter.toString().trim();
-        assertTrue(output.startsWith("REGISTER_FAIL"));
+        assertTrue(output.startsWith(ProtocolConstants.RESPONSE_REGISTER_FAIL));
         assertTrue(output.contains("Invalid JSON"));
     }
 
     @Test
     void testHandleLoginSuccess() {
         String email = "login@example.com";
-        String rawPassword = "Secret123";
+        String rawPassword = PASSWORD;
+        String salt = SecurityUtils.generateSalt();
+        String hash = SecurityUtils.hashPassword(rawPassword, salt);
 
-        User registrationUser = new User(email, rawPassword);
-        authService.handleRegister(gson.toJson(registrationUser), printWriter);
+        fakeDatabase.saveUser(new User(email, salt + "$" + hash));
         responseWriter.getBuffer().setLength(0);
 
         User loginUser = new User(email, rawPassword);
         authService.handleLogin(gson.toJson(loginUser), new Socket(), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertEquals("LOGIN_SUCCESS", output);
+        assertEquals(ProtocolConstants.RESPONSE_LOGIN_SUCCESS, output);
         assertTrue(fakeSessionManager.isLoggedIn(email));
     }
 
     @Test
     void testHandleLoginInvalidPassword() {
-        User user = new User("badpass@example.com", PASSWORD);
-        authService.handleRegister(gson.toJson(user), printWriter);
-        responseWriter.getBuffer().setLength(0);
+        String email = "badpass@example.com";
+        String salt = SecurityUtils.generateSalt();
+        String hash = SecurityUtils.hashPassword(PASSWORD, salt);
+        fakeDatabase.saveUser(new User(email, salt + "$" + hash));
 
-        User wrong = new User("badpass@example.com", WRONG_PASSWORD);
+        User wrong = new User(email, WRONG_PASSWORD);
+        responseWriter.getBuffer().setLength(0);
         authService.handleLogin(gson.toJson(wrong), new Socket(), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertTrue(output.startsWith("LOGIN_FAIL"));
+        assertTrue(output.startsWith(ProtocolConstants.RESPONSE_LOGIN_FAIL));
         assertTrue(output.contains("Invalid credentials"));
     }
 
@@ -120,22 +124,21 @@ class AuthServiceTest {
         authService.handleLogin(gson.toJson(ghost), new Socket(), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertTrue(output.startsWith("LOGIN_FAIL"));
+        assertTrue(output.startsWith(ProtocolConstants.RESPONSE_LOGIN_FAIL));
         assertTrue(output.contains("User not found"));
     }
 
     @Test
     void testHandleLogoutSuccess() {
-        User user = new User("logout@example.com", PASSWORD);
-        authService.handleRegister(gson.toJson(user), printWriter);
-        authService.handleLogin(gson.toJson(user), new Socket(), printWriter);
+        String email = "logout@example.com";
+        fakeSessionManager.startSession(email, new Socket());
 
         responseWriter.getBuffer().setLength(0);
-        authService.handleLogout(gson.toJson(user), printWriter);
+        authService.handleLogout(gson.toJson(new User(email, "")), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertEquals("LOGOUT_SUCCESS", output);
-        assertFalse(fakeSessionManager.isLoggedIn(user.getEmail()));
+        assertEquals(ProtocolConstants.RESPONSE_LOGOUT_SUCCESS, output);
+        assertFalse(fakeSessionManager.isLoggedIn(email));
     }
 
     @Test
@@ -144,21 +147,19 @@ class AuthServiceTest {
         authService.handleLogout(gson.toJson(ghost), printWriter);
 
         String output = responseWriter.toString().trim();
-        assertEquals("LOGOUT_SUCCESS", output); // <- Expect success regardless
+        assertEquals(ProtocolConstants.RESPONSE_LOGOUT_SUCCESS, output);
     }
 
-    // --- Fakes below ---
+    // --- Fakes ---
 
-    // FakeDatabase class for testing purposes
     static class FakeDatabase extends FileDatabase {
         private final Map<String, User> users = new HashMap<>();
         private final List<Email> emails = new ArrayList<>();
 
         public FakeDatabase() {
-            super("test_users.db", "test_emails.db");
+            super("src/test/resources/test_users.db", "src/test/resources/test_emails.db");
         }
 
-        // Override saveUser method
         @Override
         public boolean saveUser(User user) {
             if (users.containsKey(user.getEmail())) {
@@ -168,26 +169,25 @@ class AuthServiceTest {
             return true;
         }
 
-        // Override getUser method
         @Override
         public User getUser(String email) {
             return users.get(email);
         }
 
-        // Override saveEmail method
+        @Override
+        public boolean userExists(String email) {
+            return users.containsKey(email);
+        }
+
         @Override
         public boolean saveEmail(Email email) {
             emails.add(email);
             return true;
         }
 
-        // Override getEmailById method
         @Override
         public Email getEmailById(String id) {
-            return emails.stream()
-                    .filter(e -> e.getId().equals(id))
-                    .findFirst()
-                    .orElse(null);
+            return emails.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
         }
     }
 

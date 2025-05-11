@@ -7,46 +7,51 @@ import static org.junit.jupiter.api.Assertions.*;
 class SecurityUtilsTest {
 
     @Test
-    void testHashPasswordAndVerifySuccess() {
-        String plainPassword = "MySecurePassword123!";
-        String salt = SecurityUtils.generateSalt();
-        String hash = SecurityUtils.hashPassword(plainPassword, salt);
-
-        assertNotNull(hash);
-        assertTrue(SecurityUtils.verifyPassword(plainPassword, hash, salt));
-    }
-
-    @Test
-    void testVerifyFailsWithWrongPassword() {
-        String correctPassword = "CorrectPassword";
-        String wrongPassword = "WrongPassword";
-        String salt = SecurityUtils.generateSalt();
-        String hash = SecurityUtils.hashPassword(correctPassword, salt);
-
-        assertFalse(SecurityUtils.verifyPassword(wrongPassword, hash, salt));
-    }
-
-    @Test
-    void testHashGeneratesDifferentHashesWithDifferentSalts() {
-        String password = "SamePassword";
+    void testGenerateSaltProducesUniqueNonNullString() {
         String salt1 = SecurityUtils.generateSalt();
         String salt2 = SecurityUtils.generateSalt();
 
-        String hash1 = SecurityUtils.hashPassword(password, salt1);
-        String hash2 = SecurityUtils.hashPassword(password, salt2);
-
-        assertNotEquals(hash1, hash2);
+        assertNotNull(salt1);
+        assertNotNull(salt2);
+        assertNotEquals(salt1, salt2);
+        assertFalse(salt1.isBlank());
+        assertFalse(salt2.isBlank());
     }
 
     @Test
-
-    void testSameInputProducesSameHashWithSameSalt() {
-        String password = "Repeatable";
+    void testHashPasswordProducesNonNullHash() {
         String salt = SecurityUtils.generateSalt();
+        String hash = SecurityUtils.hashPassword("password123", salt);
 
-        String hash1 = SecurityUtils.hashPassword(password, salt);
-        String hash2 = SecurityUtils.hashPassword(password, salt);
+        assertNotNull(hash);
+        assertFalse(hash.isBlank());
+        assertNotEquals("password123", hash); // Ensure it's not the plain password
+    }
 
-        assertEquals(hash1, hash2);
+    @Test
+    void testVerifyPasswordSuccess() {
+        String password = "mySecretPass";
+        String salt = SecurityUtils.generateSalt();
+        String hash = SecurityUtils.hashPassword(password, salt);
+
+        assertTrue(SecurityUtils.verifyPassword(password, hash, salt));
+    }
+
+    @Test
+    void testVerifyPasswordFailsWithWrongPassword() {
+        String salt = SecurityUtils.generateSalt();
+        String hash = SecurityUtils.hashPassword("correctPassword", salt);
+
+        assertFalse(SecurityUtils.verifyPassword("wrongPassword", hash, salt));
+    }
+
+    @Test
+    void testVerifyPasswordFailsWithWrongSalt() {
+        String password = "securePassword";
+        String salt1 = SecurityUtils.generateSalt();
+        String salt2 = SecurityUtils.generateSalt();
+
+        String hash = SecurityUtils.hashPassword(password, salt1);
+        assertFalse(SecurityUtils.verifyPassword(password, hash, salt2));
     }
 }

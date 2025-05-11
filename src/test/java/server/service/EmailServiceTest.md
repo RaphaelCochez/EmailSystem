@@ -4,55 +4,69 @@ This document outlines the unit testing strategy for the `EmailService` class in
 
 ---
 
+## Status: Fully Implemented in `EmailServiceTest.java`
+
+---
+
 ## Objective
 
 Ensure that the `EmailService` class:
-- Handles sending, listing, searching, and retrieving emails correctly
-- Enforces validation and user access rules during send and read operations
-- Operates entirely in memory, in accordance with CA2 runtime constraints
+
+* Handles sending, listing, searching, and retrieving emails correctly
+* Enforces validation rules (presence of recipient, subject, body, etc.)
+* Prevents sending to unknown recipients
+* Logs all actions using SLF4J and LogHandler
+* Validates sender or recipient identity when fetching email by ID
 
 ---
 
 ## Tests Implemented
 
-### 1. Send Email to Registered User
-- Save a recipient user
-- Send a valid email to that user
-- Assert that the email is accepted and saved
+### 1. `testSendEmailToRegisteredUser`
 
-### 2. Send Email to Unregistered User
-- Attempt to send an email to an unknown recipient
-- Assert that the result is `false` (email rejected)
+* Saves a valid recipient user
+* Sends an email with required fields
+* Asserts that the email is accepted, saved, and assigned a unique ID
 
-### 3. Get Received Emails
-- Store an email addressed to a user
-- Retrieve received emails via `getReceivedEmails`
-- Assert correctness of subject and size
+### 2. `testSendEmailToUnregisteredUserFails`
 
-### 4. Get Sent Emails
-- Store an email sent by a user
-- Retrieve sent emails via `getSentEmails`
-- Assert correctness of subject and size
+* Sends an email to a recipient not in the database
+* Asserts that `sendEmail` returns `false`
 
-### 5. Search Emails (Received)
-- Save an email with keyword in subject
-- Search by keyword in received context
-- Assert one result and correct ID
+### 3. `testGetReceivedEmails`
 
-### 6. Search Emails (Sent)
-- Save an email with keyword in recipient
-- Search by keyword in sent context
-- Assert one result and correct ID
+* Saves a received email for a user
+* Calls `getReceivedEmails`
+* Asserts list size and subject content
 
-### 7. Get Email by ID (Authorized)
-- Save an email where requester is the recipient
-- Fetch by ID using `getEmailById`
-- Assert all expected fields match
+### 4. `testGetSentEmails`
 
-### 8. Get Email by ID (Unauthorized)
-- Save an email not linked to requester
-- Fetch by ID using `getEmailById`
-- Assert result is `null`
+* Saves a sent email from a user
+* Calls `getSentEmails`
+* Asserts list size and subject content
+
+### 5. `testSearchEmailsReceived`
+
+* Saves an email with keyword in subject/body
+* Calls `searchEmails(..., "received", keyword)`
+* Verifies correct match and ID
+
+### 6. `testSearchEmailsSent`
+
+* Saves a sent email with identifiable keyword
+* Calls `searchEmails(..., "sent", keyword)`
+* Verifies correct match and ID
+
+### 7. `testGetEmailByIdSuccess`
+
+* Saves an email linked to the user (sent or received)
+* Calls `getEmailById(user, emailId)`
+* Asserts all fields match expected values
+
+### 8. `testGetEmailByIdUnauthorized`
+
+* Saves an email unrelated to the querying user
+* Asserts that `getEmailById` returns `null`
 
 ---
 
@@ -68,6 +82,7 @@ email.setBody("Thanks for joining.");
 email.setTimestamp("2025-04-18T12:00:00Z");
 
 assertTrue(emailService.sendEmail(email));
+assertNotNull(email.getId());
 
 List<Email> received = emailService.getReceivedEmails("user@example.com");
 assertEquals(1, received.size());
@@ -75,5 +90,21 @@ assertEquals("Welcome", received.get(0).getSubject());
 
 Email retrieved = emailService.getEmailById("user@example.com", received.get(0).getId());
 assertNotNull(retrieved);
+assertEquals("admin@example.com", retrieved.getFrom());
 ```
 
+---
+
+## File Path
+
+```text
+src/test/java/server/service/EmailServiceTest.java
+```
+
+**Related Classes:**
+
+* `server.service.EmailService`
+* `server.data.FileDatabase`
+* `model.Email`
+* `model.User`
+* `utils.LogHandler`

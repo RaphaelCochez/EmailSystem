@@ -47,6 +47,7 @@ class EmailServiceTest {
 
         boolean result = emailService.sendEmail(email);
         assertTrue(result);
+        assertNotNull(email.getId());
     }
 
     @Test
@@ -134,7 +135,7 @@ class EmailServiceTest {
         email.setTo("bob@example.com");
         email.setFrom("alice@example.com");
         email.setSubject("Follow up");
-        email.setBody("Checking in");
+        email.setBody("Checking in with Bob on progress");
         email.setTimestamp("2025-04-10T14:00:00Z");
         email.setVisible(true);
         email.setEdited(false);

@@ -1,5 +1,43 @@
 # Email System – README
 
+## Execute the code
+
+use `run_email_system.bat` to execute on any windows device, this wil launch the server and 3 clients
+
+Otherwise navigate to `/emailsystem` and:
+
+**Launch EmailServer using maven:**
+```bash
+mvn exec:java -Dexec.mainClass="server.EmailServer"
+```
+
+**Launch EmailClientCLI using maven:**
+
+
+## Environment variables
+```bash 
+mvn exec:java -Dexec.mainClass="client.core.EmailClientCLI"
+```
+I found this neat little development trick to use an environment variable or else default function. I use this trick to make sure there is no issue with environment variables when running the code in development
+* https://stackoverflow.com/questions/28818506/optional-orelse-optional-in-java 
+
+```java 
+// development only
+private static final String DEFAULT_KEYSTORE_PASSWORD = "d00285437";
+public static final String KEYSTORE_PASSWORD = Optional.ofNullable(System.getenv("KEYSTORE_PASSWORD")).orElse(DEFAULT_KEYSTORE_PASSWORD);
+```
+## Code references and followed coding conventions
+As i am quite new to the JAVA programming language i tried to program the code following these conventions & guidelines and reference books.
+
+* https://www.oracle.com/java/technologies/javase/codeconventions-programmingpractices.html 
+* Java Network Programming, 4th Edition
+by Elliotte Rusty Harold
+* Advanced Network Programming – Principles and Techniques  by Bogdan Ciubotaru & Gabriel-Miro Muntean
+
+**I also got a lot of inspiration from the github page**
+* https://github.com/mgraham-dkit/NetworkProgramming2025 
+here did i get my inspiration on how to do the threads and thread pooling in java
+
 ## Docs Formatter Tool
 For clean Markdown formatting, use: https://www.rich-text-to-markdown.com/
 
@@ -9,54 +47,70 @@ For clean Markdown formatting, use: https://www.rich-text-to-markdown.com/
 
 ```plaintext
 /EmailSystem
+├── /logs
+│   └── server.log                             ← Server-side log file
 ├── /src
-│   ├── /client
-│   │   ├── EmailClientCLI.java          ← CLI client main logic (UI, user commands)
-│   │   ├── ServerListener.java          ← Listens for server responses
-│   │   └── CommandFormatter.java        ← Formats user commands into protocol format
-│   │
-│   ├── /server
-│   │   ├── EmailServer.java             ← Entry point for the server (thread-per-client)
-│   │   ├── /handler
-│   │   │   ├── ClientHandler.java       ← Handles each client connection in a thread
-│   │   │   └── CommandHandler.java      ← Routes and executes commands from clients
-│   │   ├── /protocol
-│   │   │   └── ProtocolConstants.java   ← Command keywords and response constants
-│   │   ├── /service
-│   │   │   ├── AuthService.java         ← Login, registration, logout logic
-│   │   │   ├── EmailService.java        ← Inbox, sent mail, search, read logic
-│   │   │   └── SessionManager.java      ← Tracks active sessions and user states
-│   │   ├── /data
-│   │   │   └── FileDatabase.java        ← Manages JSON-based file persistence
-│
-│   ├── /model
-│   │   ├── User.java                    ← Data class for user credentials
-│   │   └── Email.java                   ← Data class for email structure
-│
-│   ├── /utils
-│   │   ├── Constants.java               ← Central config for paths, flags, CLI, protocol
-│   │   ├── LogHandler.java              ← Async logging handler with shutdown support
-│   │   └── SecurityUtils.java           ← Salted password hashing and verification
-│
+│   ├── /main
+│   │   ├── /java
+│   │   │   ├── /client
+│   │   │   │   ├── /auth
+│   │   │   │   │   ├── AuthController.java     ← Handles user registration and login
+│   │   │   │   │   ├── AuthValidator.java      ← Validates user input for login/register
+│   │   │   │   │   ├── LoginPrompter.java      ← Prompts for login credentials
+│   │   │   │   │   └── RegisterPrompter.java   ← Prompts for registration details
+│   │   │   │   ├── /core
+│   │   │   │   │   ├── EmailClientCLI.java     ← CLI client entry point and logic loop
+│   │   │   │   │   ├── ServerResponseHandler.java ← Handles protocol responses from server
+│   │   │   │   │   └── SessionState.java       ← Tracks current session state of client
+│   │   │   │   ├── /handler
+│   │   │   │   │   ├── EmailLister.java        ← Lists received or sent emails
+│   │   │   │   │   ├── EmailReader.java        ← Reads a specific email by ID
+│   │   │   │   │   ├── EmailSearcher.java      ← Performs keyword-based email search
+│   │   │   │   │   └── EmailSender.java        ← Sends a composed email to the server
+│   │   │   │   ├── /router
+│   │   │   │   │   └── CommandRouter.java      ← Routes user commands to appropriate client handler
+│   │   │   ├── /server
+│   │   │   │   ├── EmailServer.java            ← Thread-per-client server entry point
+│   │   │   │   ├── /handler
+│   │   │   │   │   ├── ClientHandler.java       ← Per-client thread handler
+│   │   │   │   │   └── CommandHandler.java      ← Executes parsed client commands
+│   │   │   │   ├── /service
+│   │   │   │   │   ├── AuthService.java         ← Auth logic (register, login, logout)
+│   │   │   │   │   ├── EmailService.java        ← Handles email storage, retrieval, search
+│   │   │   │   │   └── SessionManager.java      ← Tracks session state per user
+│   │   │   │   ├── /data
+│   │   │   │   │   └── FileDatabase.java        ← Persistent JSON storage (users, emails)
+│   │   │   │   └── sslcertificate.md           ← Guide to setting up SSL certificates (if applicable)
+│   │   │   ├── /model
+│   │   │   │   ├── User.java                   ← Serializable user structure
+│   │   │   │   └── Email.java                  ← Serializable email structure
+│   │   │   ├── /utils
+│   │   │   │   ├── ClientConstants.java        ← Client-specific configuration values
+│   │   │   │   ├── CommandFormatter.java       ← Formats CLI commands for protocol
+│   │   │   │   ├── ConsoleConstants.java       ← CLI banners, prompts, and messages
+│   │   │   │   ├── ConsolePrinter.java         ← Formatted console output utilities
+│   │   │   │   ├── Constants.java              ← Shared configurable values
+│   │   │   │   ├── LogHandler.java             ← Custom non-blocking logger for server output
+│   │   │   │   ├── LogUtils.java               ← Optional debug trace printer
+│   │   │   │   ├── ProtocolConstants.java      ← Protocol command and response constants
+│   │   │   │   └── SecurityUtils.java          ← Salt+hash password crypto methods
 ├── /resources
-│   ├── users.db                         ← Flat file for users
-│   └── emails.db                        ← Flat file for emails
-│
+│   ├── users.db                              ← Main persistent user file
+│   └── emails.db                             ← Main persistent email file
 ├── /test
 │   ├── /java
-│   │   ├── /model                       ← Model unit tests
-│   │   ├── /server/data                 ← FileDatabase tests
-│   │   ├── /server/service              ← Auth, Email, Session tests
-│   │   ├── /server/handler              ← ClientHandler, CommandHandler tests
-│   │   └── /utils                       ← Logging and security utility tests
+│   │   ├── /model                             ← Unit tests: EmailModelTest, UserModelTest
+│   │   ├── /server/data                       ← Unit tests: FileDatabaseUserTest, EmailTest
+│   │   ├── /server/service                    ← Unit tests: AuthServiceTest, EmailServiceTest, SessionManagerTest
+│   │   ├── /server/handler                    ← Unit tests: ClientHandlerTest, CommandHandlerTest
+│   │   └── /utils                             ← Unit tests: LogHandlerTest, SecurityUtilsTest
 │   └── /resources
-│       ├── test_users.db                ← Isolated test data
-│       └── test_emails.db
-│
-├── /logs
-│   └── server.log                       ← Log output (optional)
-│
-└── README.md
+│       ├── test_users.db                      ← Test-specific user database
+│       └── test_emails.db                     ← Test-specific email database
+├── README.md                                  ← Documentation and usage instructions
+├── run_email_system.bat                       ← Launcher script for server and clients
+└── pom.xml                                     ← Maven build configuration
+
 ```
 
 
@@ -69,7 +123,7 @@ For clean Markdown formatting, use: https://www.rich-text-to-markdown.com/
 | `model/`     | Data classes for `User`, `Email`, etc.                                    |
 | `utils/`     | Reusable tools (e.g., encryption, JSON, constants)                        |
 | `database/`  | Flat-file DB — stores users and emails                                    |
-| `logs/`      | Optional but good for debugging (`@Slf4j` output)                         |
+| `logs/`      | all the server logs                          |
 
 ## Design Rationale
 The server follows a modular, layered architecture to enable clean unit testing, code isolation, and maintainable logic separation.
@@ -105,6 +159,8 @@ Also, tests use isolated test_users.db and test_emails.db files.
 * Command routing
 
 * Logging robustness
+  
+* Etc ...
 
 
 ### Test Structure
@@ -150,6 +206,8 @@ Ensure your `pom.xml` includes the following dependency for JUnit 5:
   <scope>test</scope>
 </dependency>
 ```
+
+More details in `src\test\ReadMe.md`
 
 ---
 
@@ -249,7 +307,7 @@ src/test/java/server/handler/ClientHandlerTest.md
 - Temporary `.db` files are reset before each test to ensure repeatable results.
 - The framework ensures stability under failure conditions such as I/O exceptions and dropped connections.
 
-### Thread Safety
+# Thread Safety
 
 - All core services (`SessionManager`, `FileDatabase`, `LogHandler`) are implemented with thread safety in mind.
 - Session state is stored in `ConcurrentHashMap`, ensuring safe concurrent access.
@@ -276,8 +334,7 @@ Users can access the following commands before authentication:
 ### Post-Login Menu
 After successful login, the user has access to full email functionality:
 - `send` — Send an email.
-- `inbox` — View received emails (metadata only).
-- `sent` — View sent emails (metadata only).
+- `list` — View received or sent emails (metadata only).
 - `search` — Search through inbox or sent by keyword.
 - `read` — View full content of a specific email by ID.
 - `logout` — End the session and return to the login screen.
@@ -350,16 +407,9 @@ The `Constants.java` file defines all global constants used across the email sys
 
 ---
 
-### Server Configuration
-
-| Constant        | Value | Description                                  |
-|-----------------|-------|----------------------------------------------|
-| `SERVER_PORT`   | `5050` | TCP port on which the server listens.        |
-| `MAX_CLIENTS`   | `50`   | Max number of concurrent client connections. |
-
----
 
 ### File Paths
+* these files would be created by the frogram if they were missing, no need to store them in environment variables
 
 | Constant         | Path                                   | Description                            |
 |------------------|----------------------------------------|----------------------------------------|
@@ -375,35 +425,9 @@ The `Constants.java` file defines all global constants used across the email sys
 |----------------|---------|-----------------------------------------------------------|
 | `DEBUG_MODE`   | `true`  | Enables detailed logging output.                          |
 | `IS_TEST_ENV`  | `true`  | Enables test-safe configurations and paths.               |
-| `USE_TLS`      | `false` | Placeholder flag for future TLS/SSL support.              |
+| `USE_TLS`      | `false` | Placeholder flag for future TLS/SSL support, not implemented due to lack of time.              |
 
 ---
 
-### Protocol Commands
-
-| Command Constant | Description                          |
-|------------------|--------------------------------------|
-| `REGISTER`       | Register a new user.                 |
-| `LOGIN`          | Log in an existing user.             |
-| `LOGOUT`         | Log out from current session.        |
-| `SEND`           | Send an email.                       |
-| `LIST`           | List inbox or sent emails.           |
-| `READ`           | Read a specific email.               |
-| `DELETE`         | Delete an email.                     |
-| `SEARCH`         | Search emails by keyword.            |
-| `EXIT`           | Terminate the client session.        |
-
----
-
-### CLI Syntax Templates
-
-| Template                     | Description                           |
-|------------------------------|---------------------------------------|
-| `REGISTER <email> <pass>`    | Registers a new user.                 |
-| `LOGIN <email> <pass>`       | Logs in with credentials.             |
-| `SEND <to> <subject> <body>` | Sends a new email.                    |
-| `SEARCH <keyword>`           | Searches for emails matching keyword. |
-| `LOGOUT`                     | Logs out the current user.            |
-| `EXIT`                       | Disconnects the client from server.   |
 
 

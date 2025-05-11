@@ -34,11 +34,6 @@ class ClientHandlerTest {
         ClientHandler clientHandler = new ClientHandler(socket, handler);
         clientHandler.run();
 
-        System.out.println("Handled Commands:");
-        handledCommands.forEach(System.out::println);
-        System.out.println("Raw Client Output:");
-        System.out.println(socket.getCapturedOutput());
-
         boolean registerMatched = handledCommands.stream().anyMatch(cmd -> {
             if (!cmd.startsWith("REGISTER%%"))
                 return false;
@@ -52,7 +47,6 @@ class ClientHandlerTest {
         });
 
         boolean exitMatched = handledCommands.stream().anyMatch(cmd -> cmd.contains("EXIT%%{}"));
-
         assertTrue(registerMatched, "Expected REGISTER command with matching JSON");
         assertTrue(exitMatched, "Expected EXIT command to be processed");
 
@@ -62,10 +56,10 @@ class ClientHandlerTest {
 
     @Test
     void testClientHandlerHandlesIOException() {
-        Socket socket = new FakeSocketWithError();
+        Socket errorSocket = new FakeSocketWithError();
         handler = new FakeCommandHandler(handledCommands);
 
-        ClientHandler clientHandler = new ClientHandler(socket, handler);
+        ClientHandler clientHandler = new ClientHandler(errorSocket, handler);
 
         assertDoesNotThrow(clientHandler::run);
     }
@@ -86,12 +80,12 @@ class ClientHandlerTest {
 
     @Test
     void testClientHandlerExitsCleanlyOnEOF() {
-        socket = new FakeSocket(""); // Empty input simulates EOF
+        socket = new FakeSocket(""); // EOF input
         handler = new FakeCommandHandler(handledCommands);
 
         ClientHandler clientHandler = new ClientHandler(socket, handler);
 
-        assertDoesNotThrow(clientHandler::run, "ClientHandler should exit cleanly on EOF");
+        assertDoesNotThrow(clientHandler::run);
         assertTrue(handledCommands.isEmpty(), "No commands should be handled on EOF");
     }
 
@@ -109,10 +103,10 @@ class ClientHandlerTest {
         String[] responses = socket.getCapturedOutput().split("\n");
 
         assertTrue(responses.length >= 3, "Each command should produce its own response line");
-        assertTrue(responses[responses.length - 1].contains("EXIT_SUCCESS"), "Last response should confirm exit");
+        assertTrue(responses[responses.length - 1].contains("EXIT_SUCCESS"));
     }
 
-    // --- Fakes ---
+    // === Fake Mocks ===
 
     static class FakeSocket extends Socket {
         private final ByteArrayInputStream input;
@@ -155,7 +149,7 @@ class ClientHandlerTest {
         }
 
         @Override
-        public OutputStream getOutputStream() throws IOException {
+        public OutputStream getOutputStream() {
             return new ByteArrayOutputStream();
         }
 
@@ -186,7 +180,7 @@ class ClientHandlerTest {
             if (input.startsWith("EXIT")) {
                 out.println("EXIT_SUCCESS");
             }
-            out.flush(); // ensure all responses are flushed
+            out.flush();
         }
     }
 }

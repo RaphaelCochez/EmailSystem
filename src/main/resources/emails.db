@@ -4,3 +4,4 @@
 {"id":"75ccd8b4-cc2e-4afb-9987-a2e39d2ba58e","to":"user1@test.com","from":"user1@test.com","subject":"test","body":"dit is een test","timestamp":"2025-05-07 17:43:38","visible":true,"edited":false}
 {"id":"77eff004-3aed-4465-948d-9efac22a6066","to":"user2@test.com","from":"user1@test.com","subject":"test1","body":"this is a test for a tests test","timestamp":"2025-05-07 18:21:48","visible":true,"edited":false}
 {"id":"f13fc828-d165-48a2-ae96-5d275d5b68b5","to":"user1@test.com","from":"user2@test.com","subject":"dkit","body":"im bored","timestamp":"2025-05-07 23:49:51","visible":true,"edited":false}
+{"id":"aa785e45-57df-4265-b85b-fb583aff4307","to":"user2@test.com","from":"user1@test.com","subject":"CA 2 test","body":"this is a test for CA 2","timestamp":"2025-05-11T22:25:30","visible":true,"edited":false}

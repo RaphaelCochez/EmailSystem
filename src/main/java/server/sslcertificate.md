@@ -1,4 +1,6 @@
-# Steps to Generate SSL Certificates for EmailServer
+# Steps to Generate SSL Certificates for the EmailServer
+* this is NOT implemented yet, not enouht ime to implement all of this 
+
 
 ## find the keytool documentation
 **link:** https://docs.oracle.com/en/java/javase/24/docs/specs/man/keytool.html#name

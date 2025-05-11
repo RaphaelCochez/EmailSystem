@@ -4,7 +4,15 @@ import java.util.Objects;
 
 public class User {
     private String email;
-    private String password; // hashed or raw depending on context
+    private String password;
+
+    // === Future-proofed user fields (commented placeholders) ===
+    /*
+     * private String displayName; // User-friendly name
+     * private boolean isAdmin; // Authorization for future admin CLI
+     * private String createdAt; // Timestamp of registration
+     * private boolean locked; // Account lockout flag (for brute force protection)
+     */
 
     public User() {
     } // Required for Gson

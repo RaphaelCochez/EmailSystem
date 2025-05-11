@@ -55,4 +55,17 @@ class SessionManagerTest {
         assertFalse(sessionManager.isLoggedIn("user2@example.com"));
     }
 
+    @Test
+    void testGetEmailForSocket() {
+        sessionManager.startSession(testEmail, dummySocket);
+        String email = sessionManager.getEmailForSocket(dummySocket);
+        assertEquals(testEmail, email, "Should return correct email for associated socket");
+    }
+
+    @Test
+    void testGetEmailForUnmappedSocketReturnsNull() {
+        Socket unknownSocket = new Socket();
+        String result = sessionManager.getEmailForSocket(unknownSocket);
+        assertNull(result, "Should return null for a socket with no associated session");
+    }
 }

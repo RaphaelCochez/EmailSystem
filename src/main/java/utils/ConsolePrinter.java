@@ -1,4 +1,4 @@
-package client;
+package utils;
 
 public class ConsolePrinter {
 
@@ -16,6 +16,10 @@ public class ConsolePrinter {
 
     public static void error(String message) {
         System.err.println(RED + message + RESET);
+    }
+
+    public static void warning(String message) {
+        System.out.println(YELLOW + "[WARNING] " + message + RESET);
     }
 
     public static void info(String message) {
@@ -61,4 +65,5 @@ public class ConsolePrinter {
     public static void headline(String message) {
         System.out.println(MAGENTA + "\n== " + message.toUpperCase() + " ==\n" + RESET);
     }
+
 }

@@ -2,7 +2,7 @@ package model;
 
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
-import utils.Constants;
+import utils.ServerConstants;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,7 +30,7 @@ public class EmailModelTest {
             email.setTimestamp("invalid-date");
         });
 
-        assertTrue(exception.getMessage().contains(Constants.TIMESTAMP_FORMAT));
+        assertTrue(exception.getMessage().contains(ServerConstants.TIMESTAMP_FORMAT));
     }
 
     @Test

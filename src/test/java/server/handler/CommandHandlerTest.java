@@ -1,10 +1,11 @@
 package server.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import model.Email;
 import model.User;
 
-import static server.protocol.ProtocolConstants.*;
+import static utils.ProtocolConstants.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,35 +49,49 @@ class CommandHandlerTest {
     @Test
     void testUnknownCommand() {
         handler.handle("UNKNOWN%%{}", dummySocket, out);
-        assertTrue(writer.toString().contains("UNKNOWN_COMMAND"));
+        assertTrue(writer.toString().contains(RESPONSE_UNKNOWN));
     }
 
     @Test
     void testInvalidFormat() {
         handler.handle("NO_DELIMITER_INPUT", dummySocket, out);
-        assertTrue(writer.toString().contains("INVALID_FORMAT"));
+        assertTrue(writer.toString().contains(RESPONSE_INVALID_FORMAT));
     }
 
     @Test
-    void testSendEmailSuccess() {
-        db.saveUser(new User("sender@example.com", "any"));
+    void testSendEmailFailsIfNotLoggedIn() {
         db.saveUser(new User("recipient@example.com", "any"));
-        sessions.startSession("sender@example.com", dummySocket); // required for authenticated command
 
         Email email = new Email();
-        email.setId(UUID.randomUUID().toString());
         email.setTo("recipient@example.com");
         email.setFrom("sender@example.com");
         email.setSubject("Subject");
         email.setBody("Body");
         email.setTimestamp("2025-04-18T14:00:00Z");
         email.setVisible(true);
-        email.setEdited(false);
 
-        String json = gson.toJson(email);
-        handler.handle("SEND_EMAIL%%" + json, dummySocket, out);
+        handler.handle("SEND_EMAIL%%" + gson.toJson(email), dummySocket, out);
 
-        assertTrue(writer.toString().contains("SEND_EMAIL_SUCCESS"));
+        assertTrue(writer.toString().contains(RESPONSE_UNAUTHORIZED));
+    }
+
+    @Test
+    void testSendEmailSuccess() {
+        db.saveUser(new User("sender@example.com", "any"));
+        db.saveUser(new User("recipient@example.com", "any"));
+        sessions.startSession("sender@example.com", dummySocket);
+
+        Email email = new Email();
+        email.setTo("recipient@example.com");
+        email.setFrom("sender@example.com");
+        email.setSubject("Subject");
+        email.setBody("Body");
+        email.setTimestamp("2025-04-18T14:00:00Z");
+        email.setVisible(true);
+
+        handler.handle("SEND_EMAIL%%" + gson.toJson(email), dummySocket, out);
+
+        assertTrue(writer.toString().contains(RESPONSE_SEND_EMAIL_SUCCESS));
     }
 
     @Test
@@ -84,10 +99,6 @@ class CommandHandlerTest {
         db.saveUser(new User("alice@example.com", "pw"));
         db.saveUser(new User("bob@example.com", "pw"));
         db.saveUser(new User("intruder@example.com", "pw"));
-
-        // NO session for intruder
-        sessions.startSession("bob@example.com", dummySocket); // Optional: real recipient
-        // sessions.startSession("intruder@example.com", dummySocket);
 
         Email email = new Email();
         email.setId("id123");
@@ -97,35 +108,28 @@ class CommandHandlerTest {
         email.setBody("Don't read this");
         email.setTimestamp("2025-04-18T14:00:00Z");
         email.setVisible(true);
-        email.setEdited(false);
 
         db.saveEmail(email);
 
-        String readRequest = "READ_EMAIL%%{" +
-                "\"email\":\"intruder@example.com\",\"id\":\"id123\"}";
+        String json = "{\"email\":\"intruder@example.com\",\"id\":\"id123\"}";
+        handler.handle("READ_EMAIL%%" + json, dummySocket, out);
 
-        handler.handle(readRequest, dummySocket, out);
-
-        System.out.println("Response: " + writer.toString()); // just to check remove later if needed
-
-        assertTrue(writer.toString().contains(RESP_UNAUTHORIZED));
+        assertTrue(writer.toString().contains(RESPONSE_UNAUTHORIZED));
     }
 
     @Test
     void testRegisterSuccess() {
         User user = new User("newuser@example.com", "password123");
-        String json = gson.toJson(user);
-        handler.handle("REGISTER%%" + json, dummySocket, out);
-        assertTrue(writer.toString().contains("REGISTER_SUCCESS"));
+        handler.handle("REGISTER%%" + gson.toJson(user), dummySocket, out);
+        assertTrue(writer.toString().contains(RESPONSE_REGISTER_SUCCESS));
     }
 
     @Test
     void testRegisterDuplicate() {
         db.saveUser(new User("newuser@example.com", "existing$hash"));
         User user = new User("newuser@example.com", "password123");
-        String json = gson.toJson(user);
-        handler.handle("REGISTER%%" + json, dummySocket, out);
-        assertTrue(writer.toString().contains("REGISTER_FAIL"));
+        handler.handle("REGISTER%%" + gson.toJson(user), dummySocket, out);
+        assertTrue(writer.toString().contains(RESPONSE_REGISTER_FAIL));
     }
 
     @Test
@@ -138,7 +142,7 @@ class CommandHandlerTest {
         writer.getBuffer().setLength(0);
 
         handler.handle("LOGIN%%" + gson.toJson(user), dummySocket, out);
-        assertTrue(writer.toString().contains("LOGIN_SUCCESS"));
+        assertTrue(writer.toString().contains(RESPONSE_LOGIN_SUCCESS));
         assertTrue(sessions.isLoggedIn(email));
     }
 
@@ -150,7 +154,7 @@ class CommandHandlerTest {
 
         User wrong = new User("wrongpass@example.com", "wrongpass");
         handler.handle("LOGIN%%" + gson.toJson(wrong), dummySocket, out);
-        assertTrue(writer.toString().contains("LOGIN_FAIL"));
+        assertTrue(writer.toString().contains(RESPONSE_LOGIN_FAIL));
         assertTrue(writer.toString().contains("Invalid credentials"));
     }
 
@@ -164,42 +168,143 @@ class CommandHandlerTest {
         String logoutJson = "{\"email\":\"logoutuser@example.com\"}";
         handler.handle("LOGOUT%%" + logoutJson, dummySocket, out);
 
-        assertTrue(writer.toString().contains("LOGOUT_SUCCESS"));
+        assertTrue(writer.toString().contains(RESPONSE_LOGOUT_SUCCESS));
         assertFalse(sessions.isLoggedIn("logoutuser@example.com"));
     }
 
-    // --- Fakes for testing ---
+    @Test
+    void testRetrieveReceivedEmailsSuccess() {
+        String email = "bob@example.com";
+        db.saveUser(new User(email, "pw")); // Ensure user exists
+        sessions.startSession(email, dummySocket); // Start session for user
+
+        Email emailObj = new Email();
+        emailObj.setId("msg123");
+        emailObj.setTo(email); // Means it's a received email
+        emailObj.setFrom("alice@example.com");
+        emailObj.setSubject("Welcome");
+        emailObj.setBody("Hello Bob!");
+        emailObj.setTimestamp("2025-05-11T14:00:00Z");
+        emailObj.setVisible(true);
+        db.saveEmail(emailObj); // Store in mock database
+
+        // Corrected: check received (false = received)
+        assertEquals(1, db.getEmailsForUser(email, false).size());
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("email", email);
+        payload.addProperty("type", "received");
+
+        writer.getBuffer().setLength(0); // Clear previous output
+        handler.handle("RETRIEVE_EMAILS%%" + payload.toString(), dummySocket, out);
+
+        System.out.println("RESPONSE: " + writer); // Optional debug
+
+        assertTrue(writer.toString().contains(RESPONSE_RETRIEVE_EMAILS_SUCCESS));
+        assertTrue(writer.toString().contains("Welcome"));
+    }
+
+    @Test
+    void testSearchEmailsReturnsMatch() {
+        String email = "alice@example.com";
+        sessions.startSession(email, dummySocket);
+        db.saveUser(new User(email, "pw"));
+
+        Email emailObj = new Email();
+        emailObj.setId("search001");
+        emailObj.setTo("bob@example.com");
+        emailObj.setFrom(email);
+        emailObj.setSubject("Project Alpha");
+        emailObj.setBody("Keyword: update");
+        emailObj.setTimestamp("2025-05-11T15:00:00Z");
+        emailObj.setVisible(true);
+        db.saveEmail(emailObj);
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("email", email);
+        payload.addProperty("type", "sent");
+        payload.addProperty("keyword", "update");
+
+        writer.getBuffer().setLength(0);
+        handler.handle("SEARCH_EMAIL%%" + payload.toString(), dummySocket, out);
+
+        assertTrue(writer.toString().contains(RESPONSE_SEARCH_EMAIL_SUCCESS));
+        assertTrue(writer.toString().contains("Project Alpha"));
+    }
+
+    // === Fake Test Utilities ===
 
     static class FakeDatabase extends FileDatabase {
         private final Map<String, User> users = new HashMap<>();
         private final List<Email> emails = new ArrayList<>();
 
         public FakeDatabase() {
-            super("test_users.db", "test_emails.db");
+            super("src/test/resources/test_users.db", "src/test/resources/test_emails.db");
         }
 
-        // DO NOT mark these with @Override — they don't match supertype exactly
-        public void addUser(User user) {
-            users.putIfAbsent(user.getEmail(), user);
+        @Override
+        public boolean saveUser(User user) {
+            String key = user.getEmail().toLowerCase();
+            if (users.containsKey(key))
+                return false;
+            users.put(key, user);
+            return true;
         }
 
+        @Override
+        public boolean userExists(String email) {
+            return users.containsKey(email.toLowerCase());
+        }
+
+        @Override
         public User getUser(String email) {
-            return users.get(email);
+            return users.get(email.toLowerCase());
         }
 
-        public void addEmail(Email email) {
+        @Override
+        public boolean saveEmail(Email email) {
             emails.add(email);
+            return true;
         }
 
+        @Override
         public Email getEmailById(String id) {
-            return emails.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            return emails.stream()
+                    .filter(e -> e.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
         }
 
-        public List<Email> getEmailsForUser(String email, String type) {
+        @Override
+        public List<Email> getEmailsForUser(String email, boolean received) {
             return emails.stream()
-                    .filter(e -> "received".equalsIgnoreCase(type)
-                            ? e.getTo().equalsIgnoreCase(email)
-                            : e.getFrom().equalsIgnoreCase(email))
+                    .filter(e -> received
+                            ? e.getFrom().equalsIgnoreCase(email) // Sent emails
+                            : e.getTo().equalsIgnoreCase(email)) // Received emails
+                    .filter(Email::isVisible)
+                    .toList();
+        }
+
+        @Override
+        public List<Email> getReceivedEmails(String email) {
+            return getEmailsForUser(email, false); // false = received
+        }
+
+        @Override
+        public List<Email> getSentEmails(String email) {
+            return getEmailsForUser(email, true); // true = sent
+        }
+
+        @Override
+        public List<Email> searchEmails(String email, boolean sent, String keyword) {
+            String lower = keyword.toLowerCase();
+            return emails.stream()
+                    .filter(e -> (sent
+                            ? e.getFrom().equalsIgnoreCase(email)
+                            : e.getTo().equalsIgnoreCase(email)))
+                    .filter(e -> e.getSubject().toLowerCase().contains(lower)
+                            || e.getBody().toLowerCase().contains(lower))
+                    .filter(Email::isVisible)
                     .toList();
         }
     }
